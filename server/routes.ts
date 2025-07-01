@@ -11,32 +11,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
   setupMicrosoftAuth(app);
 
-  // Test authentication middleware - automatically logs in as student
+  // Test authentication middleware - automatically logs in as admin
   const authenticateUser: RequestHandler = async (req, res, next) => {
-    // Create test user for development
-    const testUserId = "test-student-123";
+    // Create test admin user for development
+    const testUserId = "test-admin-456";
     
-    // Ensure test user exists in database
+    // Ensure test admin user exists in database
     let testUser = await storage.getUser(testUserId);
     if (!testUser) {
       testUser = await storage.upsertUser({
         id: testUserId,
-        email: "student@test.edu",
+        email: "admin@test.edu",
         firstName: "Test",
-        lastName: "Student",
+        lastName: "Admin",
         profileImageUrl: null,
-        role: "student",
-        studentId: "STU12345"
+        role: "admin",
+        studentId: null
       });
     }
 
-    // Set test user session
+    // Set test admin user session
     req.user = {
       claims: {
         sub: testUserId,
-        email: "student@test.edu",
+        email: "admin@test.edu",
         first_name: "Test",
-        last_name: "Student"
+        last_name: "Admin"
       },
       access_token: "test-token",
       expires_at: Math.floor(Date.now() / 1000) + 3600

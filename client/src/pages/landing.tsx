@@ -45,12 +45,12 @@ export default function Landing() {
               </div>
 
               <div className="text-center text-sm text-gray-600">
-                <p>Test mode - automatically logged in as student</p>
+                <p>Test mode - automatically logged in as admin</p>
                 <Button 
                   className="w-full mt-3" 
                   onClick={() => window.location.reload()}
                 >
-                  Continue to Dashboard
+                  Continue to Admin Dashboard
                 </Button>
               </div>
             </div>
