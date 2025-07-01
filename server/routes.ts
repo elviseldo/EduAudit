@@ -229,6 +229,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Asset catalog routes
+  app.get("/api/asset-catalog", authenticateUser, async (req: any, res) => {
+    try {
+      const items = await storage.getAssetCatalogItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching asset catalog:", error);
+      res.status(500).json({ message: "Failed to fetch asset catalog" });
+    }
+  });
+
+  app.post("/api/asset-catalog", authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const item = await storage.createAssetCatalogItem(req.body);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error creating asset catalog item:", error);
+      res.status(500).json({ message: "Failed to create asset catalog item" });
+    }
+  });
+
+  // Buildings routes
+  app.get("/api/buildings", authenticateUser, async (req: any, res) => {
+    try {
+      const buildings = await storage.getBuildings();
+      res.json(buildings);
+    } catch (error) {
+      console.error("Error fetching buildings:", error);
+      res.status(500).json({ message: "Failed to fetch buildings" });
+    }
+  });
+
+  app.post("/api/buildings", authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const building = await storage.createBuilding(req.body);
+      res.status(201).json(building);
+    } catch (error) {
+      console.error("Error creating building:", error);
+      res.status(500).json({ message: "Failed to create building" });
+    }
+  });
+
+  // Maintenance logs routes
+  app.get("/api/maintenance-logs", authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const logs = await storage.getAllMaintenanceLogs();
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching maintenance logs:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance logs" });
+    }
+  });
+
+  app.get("/api/audits/:id/maintenance-logs", authenticateUser, async (req: any, res) => {
+    try {
+      const auditId = parseInt(req.params.id);
+      const logs = await storage.getMaintenanceLogsByAudit(auditId);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching maintenance logs for audit:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance logs" });
+    }
+  });
+
+  app.post("/api/maintenance-logs", authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const log = await storage.createMaintenanceLog({
+        ...req.body,
+        performedBy: userId
+      });
+      res.status(201).json(log);
+    } catch (error) {
+      console.error("Error creating maintenance log:", error);
+      res.status(500).json({ message: "Failed to create maintenance log" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
