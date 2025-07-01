@@ -10,7 +10,7 @@ export default function Landing() {
           <div className="mx-auto h-16 w-16 bg-primary rounded-full flex items-center justify-center mb-4">
             <ClipboardCheck className="text-white text-2xl" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">SchoolAudit</h2>
+          <h2 className="text-3xl font-bold text-gray-900">School Audits</h2>
           <p className="mt-2 text-sm text-gray-600">
             Asset Management & Reporting System
           </p>
