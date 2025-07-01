@@ -96,3 +96,22 @@ export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertAudit = z.infer<typeof insertAuditSchema>;
 export type Audit = typeof audits.$inferSelect;
+
+// Stats interfaces
+export interface AuditStats {
+  totalAudits: number;
+  pendingAudits: number;
+  reviewedAudits: number;
+  inProgressAudits: number;
+  resolvedAudits: number;
+  highPriorityAudits: number;
+  urgentAudits: number;
+}
+
+export interface UserAuditStats {
+  totalAudits: number;
+  pendingAudits: number;
+  reviewedAudits: number;
+  inProgressAudits: number;
+  resolvedAudits: number;
+}

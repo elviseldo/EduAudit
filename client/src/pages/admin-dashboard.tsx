@@ -186,7 +186,7 @@ export default function AdminDashboard() {
                 <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
                   <ClipboardCheck className="text-white text-sm" />
                 </div>
-                <span className="ml-3 text-xl font-semibold text-gray-900">SchoolAudit Admin</span>
+                <span className="ml-3 text-xl font-semibold text-gray-900">School Audits Admin</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
