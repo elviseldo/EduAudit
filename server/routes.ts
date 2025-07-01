@@ -1,16 +1,42 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupMicrosoftAuth, isMicrosoftAuthenticated } from "./microsoftAuth";
 import { insertAuditSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+  setupMicrosoftAuth(app);
+
+  // Combined authentication middleware
+  const authenticateUser: RequestHandler = async (req, res, next) => {
+    // Try Replit auth first
+    const replitUser = req.user as any;
+    if (req.isAuthenticated() && replitUser?.expires_at) {
+      const now = Math.floor(Date.now() / 1000);
+      if (now <= replitUser.expires_at) {
+        return next();
+      }
+    }
+
+    // Try Microsoft auth
+    const microsoftUser = (req.session as any)?.user;
+    if (microsoftUser && microsoftUser.expires_at) {
+      const now = Math.floor(Date.now() / 1000);
+      if (now <= microsoftUser.expires_at) {
+        req.user = microsoftUser; // Set user for route handlers
+        return next();
+      }
+    }
+
+    return res.status(401).json({ message: "Unauthorized" });
+  };
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -22,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Audit routes
-  app.post('/api/audits', isAuthenticated, async (req: any, res) => {
+  app.post('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const auditData = {
@@ -44,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/audits', isAuthenticated, async (req: any, res) => {
+  app.get('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -85,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/audits/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/audits/:id', authenticateUser, async (req: any, res) => {
     try {
       const auditId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
@@ -113,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/audits/:id/status', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/audits/:id/status', authenticateUser, async (req: any, res) => {
     try {
       const auditId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
@@ -138,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stats routes
-  app.get('/api/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stats', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -162,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User profile route for setting role during onboarding
-  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/user/profile', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { role, studentId } = req.body;

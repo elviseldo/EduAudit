@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Building2 } from "lucide-react";
 
 export default function Landing() {
   return (
