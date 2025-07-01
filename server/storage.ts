@@ -100,11 +100,11 @@ export class DatabaseStorage implements IStorage {
     
     const conditions = [];
     
-    if (filters?.status) {
+    if (filters?.status && filters.status !== "all") {
       conditions.push(eq(audits.status, filters.status));
     }
     
-    if (filters?.priority) {
+    if (filters?.priority && filters.priority !== "all") {
       conditions.push(eq(audits.priority, filters.priority));
     }
     
