@@ -11,28 +11,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
   setupMicrosoftAuth(app);
 
-  // Combined authentication middleware
+  // Test authentication middleware - automatically logs in as student
   const authenticateUser: RequestHandler = async (req, res, next) => {
-    // Try Replit auth first
-    const replitUser = req.user as any;
-    if (req.isAuthenticated() && replitUser?.expires_at) {
-      const now = Math.floor(Date.now() / 1000);
-      if (now <= replitUser.expires_at) {
-        return next();
-      }
+    // Create test user for development
+    const testUserId = "test-student-123";
+    
+    // Ensure test user exists in database
+    let testUser = await storage.getUser(testUserId);
+    if (!testUser) {
+      testUser = await storage.upsertUser({
+        id: testUserId,
+        email: "student@test.edu",
+        firstName: "Test",
+        lastName: "Student",
+        profileImageUrl: null,
+        role: "student",
+        studentId: "STU12345"
+      });
     }
 
-    // Try Microsoft auth
-    const microsoftUser = (req.session as any)?.user;
-    if (microsoftUser && microsoftUser.expires_at) {
-      const now = Math.floor(Date.now() / 1000);
-      if (now <= microsoftUser.expires_at) {
-        req.user = microsoftUser; // Set user for route handlers
-        return next();
-      }
-    }
+    // Set test user session
+    req.user = {
+      claims: {
+        sub: testUserId,
+        email: "student@test.edu",
+        first_name: "Test",
+        last_name: "Student"
+      },
+      access_token: "test-token",
+      expires_at: Math.floor(Date.now() / 1000) + 3600
+    };
 
-    return res.status(401).json({ message: "Unauthorized" });
+    next();
   };
 
   // Auth routes

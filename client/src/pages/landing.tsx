@@ -44,12 +44,15 @@ export default function Landing() {
                 </div>
               </div>
 
-              <Button 
-                className="w-full" 
-                onClick={() => window.location.href = '/api/login'}
-              >
-                Sign In to Continue
-              </Button>
+              <div className="text-center text-sm text-gray-600">
+                <p>Test mode - automatically logged in as student</p>
+                <Button 
+                  className="w-full mt-3" 
+                  onClick={() => window.location.reload()}
+                >
+                  Continue to Dashboard
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
