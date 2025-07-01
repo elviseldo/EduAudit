@@ -1,0 +1,321 @@
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { useLocation } from "wouter";
+import { 
+  ClipboardCheck, 
+  LogOut, 
+  Armchair, 
+  Monitor, 
+  Archive, 
+  DoorOpen,
+  Clock,
+  CheckCircle,
+  AlertCircle
+} from "lucide-react";
+import { StatsCard } from "@/components/stats-card";
+import type { Audit, UserAuditStats } from "@shared/schema";
+
+export default function StudentDashboard() {
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
+
+  // Fetch user's audits
+  const { data: audits = [], isLoading: auditsLoading } = useQuery({
+    queryKey: ["/api/audits"],
+    enabled: isAuthenticated,
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+      }
+    },
+  });
+
+  // Fetch user stats
+  const { data: stats } = useQuery({
+    queryKey: ["/api/stats"],
+    enabled: isAuthenticated,
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+      }
+    },
+  });
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
+  const handleCreateAudit = (assetType: string) => {
+    setLocation(`/audit/new?type=${assetType}`);
+  };
+
+  const getAssetIcon = (assetType: string) => {
+    switch (assetType) {
+      case 'furniture': return <Armchair className="text-primary" />;
+      case 'electronics': return <Monitor className="text-success" />;
+      case 'storage': return <Archive className="text-warning" />;
+      case 'infrastructure': return <DoorOpen className="text-purple-600" />;
+      default: return <ClipboardCheck className="text-gray-400" />;
+    }
+  };
+
+  const getConditionColor = (condition: string) => {
+    switch (condition) {
+      case 'excellent': return 'bg-green-100 text-green-800';
+      case 'good': return 'bg-blue-100 text-blue-800';
+      case 'fair': return 'bg-yellow-100 text-yellow-800';
+      case 'poor': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'reviewed': return 'bg-green-100 text-green-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case 'pending': return 'Pending Review';
+      case 'reviewed': return 'Reviewed';
+      case 'in_progress': return 'In Progress';
+      case 'resolved': return 'Resolved';
+      default: return status;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
+                  <ClipboardCheck className="text-white text-sm" />
+                </div>
+                <span className="ml-3 text-xl font-semibold text-gray-900">SchoolAudit</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-700">
+                  {user?.firstName} {user?.lastName}
+                </span>
+                <Badge className="bg-blue-100 text-primary">Student</Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back, {user?.firstName}!
+          </h1>
+          <p className="text-gray-600">
+            Report and track school asset conditions to help maintain our facilities.
+          </p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatsCard
+            title="Total Audits"
+            value={stats?.totalAudits || 0}
+            icon={<ClipboardCheck className="text-primary" />}
+            color="blue"
+          />
+          <StatsCard
+            title="Reviewed"
+            value={stats?.reviewedAudits || 0}
+            icon={<CheckCircle className="text-success" />}
+            color="green"
+          />
+          <StatsCard
+            title="Pending"
+            value={stats?.pendingAudits || 0}
+            icon={<Clock className="text-warning" />}
+            color="yellow"
+          />
+        </div>
+
+        {/* Create New Audit Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Create New Audit</CardTitle>
+            <p className="text-gray-600">
+              Report the condition of school furniture, equipment, and facilities.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                onClick={() => handleCreateAudit('furniture')}
+              >
+                <Armchair className="text-2xl text-gray-400 group-hover:text-primary" />
+                <div className="text-center">
+                  <p className="font-medium text-gray-900">Furniture</p>
+                  <p className="text-sm text-gray-500">Desks, chairs, tables</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                onClick={() => handleCreateAudit('electronics')}
+              >
+                <Monitor className="text-2xl text-gray-400 group-hover:text-primary" />
+                <div className="text-center">
+                  <p className="font-medium text-gray-900">Electronics</p>
+                  <p className="text-sm text-gray-500">Screens, projectors</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                onClick={() => handleCreateAudit('storage')}
+              >
+                <Archive className="text-2xl text-gray-400 group-hover:text-primary" />
+                <div className="text-center">
+                  <p className="font-medium text-gray-900">Storage</p>
+                  <p className="text-sm text-gray-500">Lockers, cabinets</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                onClick={() => handleCreateAudit('infrastructure')}
+              >
+                <DoorOpen className="text-2xl text-gray-400 group-hover:text-primary" />
+                <div className="text-center">
+                  <p className="font-medium text-gray-900">Infrastructure</p>
+                  <p className="text-sm text-gray-500">Doors, windows, walls</p>
+                </div>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Audits */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Recent Audits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {auditsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              </div>
+            ) : audits.length === 0 ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No audits submitted yet</p>
+                <p className="text-sm text-gray-400">Create your first audit report above</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {audits.map((audit: Audit) => (
+                  <div key={audit.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          {getAssetIcon(audit.assetType)}
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {audit.itemName} - {audit.room}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {audit.building}, {audit.floor}, {audit.room}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Submitted {new Date(audit.createdAt!).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Badge className={getStatusColor(audit.status)}>
+                          {formatStatus(audit.status)}
+                        </Badge>
+                        <Badge className={getConditionColor(audit.condition)}>
+                          {audit.condition}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
