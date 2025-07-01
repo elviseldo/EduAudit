@@ -100,8 +100,21 @@ SchoolAudit is a full-stack web application designed for school asset management
 - **REPLIT_DOMAINS**: Allowed domains for authentication
 - **NODE_ENV**: Environment mode (development/production)
 
+## Microsoft Authentication Setup (Optional)
+
+The system supports dual authentication with both Replit and Microsoft login. To enable Microsoft authentication:
+
+1. Register your app in Azure Portal (portal.azure.com)
+2. Add these environment variables:
+   - `MICROSOFT_CLIENT_ID`: Your app's client ID from Azure
+   - `MICROSOFT_CLIENT_SECRET`: Your app's client secret from Azure  
+   - `MICROSOFT_TENANT_ID`: Your organization's tenant ID (or "common" for multi-tenant)
+
+Without these credentials, the system will only show Replit login option and work perfectly fine.
+
 ## Changelog
-- July 01, 2025. Initial setup
+- July 01, 2025. Initial setup with role-based authentication
+- July 01, 2025. Added Microsoft OAuth integration (optional)
 
 ## User Preferences
 
