@@ -21,7 +21,7 @@ export default function Landing() {
             <div className="text-center space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Welcome to SchoolAudit
+                  Welcome to School Audits
                 </h3>
                 <p className="text-sm text-gray-600">
                   Sign in to access the school asset management system. Report and track the condition of furniture, equipment, and facilities.

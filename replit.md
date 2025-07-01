@@ -1,4 +1,4 @@
-# SchoolAudit - Asset Management System
+# School Audits - Asset Management System
 
 ## Overview
 
