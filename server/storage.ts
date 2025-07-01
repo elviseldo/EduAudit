@@ -1,10 +1,19 @@
 import {
   users,
   audits,
+  assetCatalog,
+  buildings,
+  maintenanceLogs,
   type User,
   type UpsertUser,
   type Audit,
   type InsertAudit,
+  type AssetCatalog,
+  type InsertAssetCatalog,
+  type Building,
+  type InsertBuilding,
+  type MaintenanceLog,
+  type InsertMaintenanceLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike } from "drizzle-orm";
@@ -23,6 +32,24 @@ export interface IStorage {
   updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit>;
   getAuditStats(): Promise<AuditStats>;
   getUserAuditStats(userId: string): Promise<UserAuditStats>;
+  
+  // Asset catalog operations
+  createAssetCatalogItem(item: InsertAssetCatalog): Promise<AssetCatalog>;
+  getAssetCatalogItems(): Promise<AssetCatalog[]>;
+  updateAssetCatalogItem(id: number, item: Partial<InsertAssetCatalog>): Promise<AssetCatalog>;
+  deleteAssetCatalogItem(id: number): Promise<void>;
+  
+  // Building operations
+  createBuilding(building: InsertBuilding): Promise<Building>;
+  getBuildings(): Promise<Building[]>;
+  updateBuilding(id: number, building: Partial<InsertBuilding>): Promise<Building>;
+  deleteBuilding(id: number): Promise<void>;
+  
+  // Maintenance log operations
+  createMaintenanceLog(log: InsertMaintenanceLog): Promise<MaintenanceLog>;
+  getMaintenanceLogsByAudit(auditId: number): Promise<MaintenanceLog[]>;
+  getAllMaintenanceLogs(): Promise<MaintenanceLog[]>;
+  updateMaintenanceLog(id: number, log: Partial<InsertMaintenanceLog>): Promise<MaintenanceLog>;
 }
 
 export interface AuditFilters {
@@ -176,6 +203,105 @@ export class DatabaseStorage implements IStorage {
       inProgressAudits: userAudits.filter(a => a.status === 'in_progress').length,
       resolvedAudits: userAudits.filter(a => a.status === 'resolved').length,
     };
+  }
+
+  // Asset catalog operations
+  async createAssetCatalogItem(itemData: InsertAssetCatalog): Promise<AssetCatalog> {
+    const [item] = await db
+      .insert(assetCatalog)
+      .values(itemData)
+      .returning();
+    return item;
+  }
+
+  async getAssetCatalogItems(): Promise<AssetCatalog[]> {
+    return await db
+      .select()
+      .from(assetCatalog)
+      .where(eq(assetCatalog.isActive, true))
+      .orderBy(assetCatalog.assetType, assetCatalog.itemName);
+  }
+
+  async updateAssetCatalogItem(id: number, itemData: Partial<InsertAssetCatalog>): Promise<AssetCatalog> {
+    const [item] = await db
+      .update(assetCatalog)
+      .set({ ...itemData, updatedAt: new Date() })
+      .where(eq(assetCatalog.id, id))
+      .returning();
+    return item;
+  }
+
+  async deleteAssetCatalogItem(id: number): Promise<void> {
+    await db
+      .update(assetCatalog)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(assetCatalog.id, id));
+  }
+
+  // Building operations
+  async createBuilding(buildingData: InsertBuilding): Promise<Building> {
+    const [building] = await db
+      .insert(buildings)
+      .values(buildingData)
+      .returning();
+    return building;
+  }
+
+  async getBuildings(): Promise<Building[]> {
+    return await db
+      .select()
+      .from(buildings)
+      .where(eq(buildings.isActive, true))
+      .orderBy(buildings.name);
+  }
+
+  async updateBuilding(id: number, buildingData: Partial<InsertBuilding>): Promise<Building> {
+    const [building] = await db
+      .update(buildings)
+      .set({ ...buildingData, updatedAt: new Date() })
+      .where(eq(buildings.id, id))
+      .returning();
+    return building;
+  }
+
+  async deleteBuilding(id: number): Promise<void> {
+    await db
+      .update(buildings)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(buildings.id, id));
+  }
+
+  // Maintenance log operations
+  async createMaintenanceLog(logData: InsertMaintenanceLog): Promise<MaintenanceLog> {
+    const [log] = await db
+      .insert(maintenanceLogs)
+      .values(logData)
+      .returning();
+    return log;
+  }
+
+  async getMaintenanceLogsByAudit(auditId: number): Promise<MaintenanceLog[]> {
+    return await db
+      .select()
+      .from(maintenanceLogs)
+      .where(eq(maintenanceLogs.auditId, auditId))
+      .orderBy(desc(maintenanceLogs.completedAt));
+  }
+
+  async getAllMaintenanceLogs(): Promise<MaintenanceLog[]> {
+    return await db
+      .select()
+      .from(maintenanceLogs)
+      .orderBy(desc(maintenanceLogs.completedAt));
+  }
+
+  async updateMaintenanceLog(id: number, logData: Partial<InsertMaintenanceLog>): Promise<MaintenanceLog> {
+    const [log] = await db
+      .update(maintenanceLogs)
+      .set(logData)
+      .where(eq(maintenanceLogs.id, id))
+      .returning();
+    return log;
   }
 }
 

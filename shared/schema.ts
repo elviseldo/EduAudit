@@ -115,3 +115,100 @@ export interface UserAuditStats {
   inProgressAudits: number;
   resolvedAudits: number;
 }
+
+// Asset catalog table for standardized assets
+export const assetCatalog = pgTable("asset_catalog", {
+  id: serial("id").primaryKey(),
+  assetType: varchar("asset_type").notNull(),
+  itemName: varchar("item_name").notNull(),
+  brandModel: varchar("brand_model"),
+  description: text("description"),
+  expectedLifespan: integer("expected_lifespan"), // in years
+  maintenanceSchedule: varchar("maintenance_schedule"), // weekly, monthly, yearly
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Buildings table for better organization
+export const buildings = pgTable("buildings", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  address: text("address"),
+  floors: integer("floors").default(1),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Maintenance logs table
+export const maintenanceLogs = pgTable("maintenance_logs", {
+  id: serial("id").primaryKey(),
+  auditId: integer("audit_id").notNull(),
+  performedBy: varchar("performed_by").notNull(),
+  workType: varchar("work_type").notNull(), // repair, replacement, preventive, emergency
+  description: text("description").notNull(),
+  cost: varchar("cost"), // Store as string to handle currency formatting
+  completedAt: timestamp("completed_at").defaultNow(),
+  nextMaintenanceDate: timestamp("next_maintenance_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Enhanced relations
+export const assetCatalogRelations = relations(assetCatalog, ({ many }) => ({
+  audits: many(audits),
+}));
+
+export const buildingsRelations = relations(buildings, ({ many }) => ({
+  audits: many(audits),
+}));
+
+export const maintenanceLogsRelations = relations(maintenanceLogs, ({ one }) => ({
+  audit: one(audits, {
+    fields: [maintenanceLogs.auditId],
+    references: [audits.id],
+  }),
+  performer: one(users, {
+    fields: [maintenanceLogs.performedBy],
+    references: [users.id],
+  }),
+}));
+
+// Update audits relations to include maintenance logs
+export const auditsEnhancedRelations = relations(audits, ({ one, many }) => ({
+  user: one(users, {
+    fields: [audits.userId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [audits.reviewedBy],
+    references: [users.id],
+  }),
+  maintenanceLogs: many(maintenanceLogs),
+}));
+
+// Insert schemas for new tables
+export const insertAssetCatalogSchema = createInsertSchema(assetCatalog).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBuildingSchema = createInsertSchema(buildings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMaintenanceLogSchema = createInsertSchema(maintenanceLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for new tables
+export type AssetCatalog = typeof assetCatalog.$inferSelect;
+export type InsertAssetCatalog = z.infer<typeof insertAssetCatalogSchema>;
+export type Building = typeof buildings.$inferSelect;
+export type InsertBuilding = z.infer<typeof insertBuildingSchema>;
+export type MaintenanceLog = typeof maintenanceLogs.$inferSelect;
+export type InsertMaintenanceLog = z.infer<typeof insertMaintenanceLogSchema>;
