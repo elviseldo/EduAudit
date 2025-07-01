@@ -125,7 +125,7 @@ export class DatabaseStorage implements IStorage {
         or(
           ilike(audits.itemName, `%${filters.search}%`),
           ilike(audits.description, `%${filters.search}%`),
-          ilike(audits.room, `%${filters.search}%`)
+          ilike(audits.grade, `%${filters.search}%`)
         )
       );
     }
