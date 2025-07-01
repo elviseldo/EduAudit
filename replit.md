@@ -115,6 +115,8 @@ Without these credentials, the system will only show Replit login option and wor
 ## Changelog
 - July 01, 2025. Initial setup with role-based authentication
 - July 01, 2025. Added Microsoft OAuth integration (optional)
+- July 01, 2025. Updated terminology from "Room" to "Grade" with example "Grade 7C"
+- July 01, 2025. Implemented test authentication system for development
 
 ## User Preferences
 

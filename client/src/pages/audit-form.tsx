@@ -61,7 +61,7 @@ export default function AuditForm() {
       brandModel: '',
       building: '',
       floor: '',
-      room: '',
+      grade: '',
       locationNotes: '',
       condition: '',
       description: '',
@@ -315,12 +315,12 @@ export default function AuditForm() {
 
                   <FormField
                     control={form.control}
-                    name="room"
+                    name="grade"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Room/Area</FormLabel>
+                        <FormLabel>Grade/Class</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Room 204, Main Hallway" {...field} />
+                          <Input placeholder="e.g., Grade 7C, Grade 12A" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

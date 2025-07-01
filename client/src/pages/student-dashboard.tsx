@@ -290,10 +290,10 @@ export default function StudentDashboard() {
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900">
-                            {audit.itemName} - {audit.room}
+                            {audit.itemName} - {audit.grade}
                           </h3>
                           <p className="text-sm text-gray-500">
-                            {audit.building}, {audit.floor}, {audit.room}
+                            {audit.building}, {audit.floor}, {audit.grade}
                           </p>
                           <p className="text-xs text-gray-400">
                             Submitted {new Date(audit.createdAt!).toLocaleDateString()}
