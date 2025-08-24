@@ -121,8 +121,52 @@ export default function AdminDashboard() {
     },
   });
 
+  // Role switching mutation
+  const switchRoleMutation = useMutation({
+    mutationFn: async ({ role, studentId }: { role: string; studentId?: string }) => {
+      await apiRequest("PATCH", "/api/user/profile", {
+        role,
+        studentId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Role Updated",
+        description: "Successfully switched to student role. Redirecting...",
+      });
+      // Small delay to let the user see the message, then redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to switch role. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLogout = () => {
     window.location.href = "/api/logout";
+  };
+
+  const handleSwitchToStudent = () => {
+    const studentId = prompt("Enter your Student ID (required for student role):");
+    if (studentId && studentId.trim()) {
+      switchRoleMutation.mutate({
+        role: "student",
+        studentId: studentId.trim(),
+      });
+    } else if (studentId !== null) {
+      toast({
+        title: "Student ID Required",
+        description: "Please enter a valid student ID to switch to student role.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleApproveAudit = (auditId: number) => {
@@ -196,6 +240,15 @@ export default function AdminDashboard() {
                 </span>
                 <Badge className="bg-purple-100 text-purple-700">Admin</Badge>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSwitchToStudent}
+                disabled={switchRoleMutation.isPending}
+                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                {switchRoleMutation.isPending ? "Switching..." : "Switch to Student"}
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
