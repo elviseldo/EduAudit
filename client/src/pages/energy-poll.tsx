@@ -20,18 +20,12 @@ export default function EnergyPoll() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  const [energyLevel, setEnergyLevel] = useState([3]); // 1-5 scale for classroom energy efficiency
-  const [mood, setMood] = useState(""); // Room temperature comfort
-  const [sleepHours, setSleepHours] = useState(0); // Lights left on count
-  const [breakfastEaten, setBreakfastEaten] = useState(false); // Electronics properly turned off
-  const [physicalActivity, setPhysicalActivity] = useState(""); // HVAC usage level
+  const [className, setClassName] = useState("");
+  const [lightsOff, setLightsOff] = useState(false);
+  const [smartBoardOff, setSmartBoardOff] = useState(false);
   const [comments, setComments] = useState("");
 
-  // Check if already submitted today
-  const { data: todaysPoll } = useQuery({
-    queryKey: ["/api/energy-polls/today"],
-    enabled: isAuthenticated,
-  });
+  // Remove the daily limit check - students can submit multiple reports
 
   // Submit energy poll mutation
   const submitPollMutation = useMutation({
@@ -58,55 +52,27 @@ export default function EnergyPoll() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!mood) {
+    if (!className.trim()) {
       toast({
-        title: "Mood Required",
-        description: "Please select your current mood.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!physicalActivity) {
-      toast({
-        title: "Physical Activity Required",
-        description: "Please select your physical activity level.",
+        title: "Class Required",
+        description: "Please enter which class you're reporting for.",
         variant: "destructive",
       });
       return;
     }
 
     submitPollMutation.mutate({
-      energyLevel: energyLevel[0],
-      mood,
-      sleepHours,
-      breakfastEaten,
-      physicalActivity,
+      energyLevel: lightsOff ? 5 : 1, // Use lights status for energy level
+      mood: "comfortable", // Default value
+      sleepHours: lightsOff ? 0 : 1, // 0 if lights off, 1 if left on
+      breakfastEaten: smartBoardOff, // Use smart board status
+      physicalActivity: "none", // Default value
       comments: comments.trim() || null,
+      className: className.trim(),
     });
   };
 
-  if (todaysPoll) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <Zap className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h1 className="text-xl font-bold text-gray-900 mb-2">Already Submitted</h1>
-              <p className="text-sm text-gray-600 mb-4">
-                You've already submitted your electricity usage report for today. Thank you!
-              </p>
-              <Button onClick={() => setLocation("/")} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Remove the daily limit - students can submit multiple reports
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -141,128 +107,61 @@ export default function EnergyPoll() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Energy Efficiency */}
+              {/* Class Name */}
               <div className="space-y-3">
-                <Label className="text-base font-medium flex items-center">
-                  <Lightbulb className="h-4 w-4 mr-2" />
-                  Classroom Energy Efficiency: {energyLevel[0]}/5
+                <Label className="text-base font-medium">
+                  Which Class?
                 </Label>
-                <Slider
-                  value={energyLevel}
-                  onValueChange={setEnergyLevel}
-                  max={5}
-                  min={1}
-                  step={1}
-                  className="w-full"
+                <input
+                  type="text"
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                  placeholder="e.g., Math 7A, English 8B, Science 9C"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Poor</span>
-                  <span>Excellent</span>
-                </div>
-                <p className="text-xs text-gray-600">Rate how efficiently electricity was used in your classroom today</p>
               </div>
 
-              {/* Room Temperature */}
-              <div className="space-y-3">
-                <Label className="text-base font-medium flex items-center">
-                  <Thermometer className="h-4 w-4 mr-2" />
-                  Room Temperature Comfort
-                </Label>
-                <RadioGroup value={mood} onValueChange={setMood}>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="too_cold" id="too_cold" />
-                      <Label htmlFor="too_cold">❄️ Too Cold - Heating needed</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="comfortable" id="comfortable" />
-                      <Label htmlFor="comfortable">✅ Comfortable - No adjustments needed</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="too_warm" id="too_warm" />
-                      <Label htmlFor="too_warm">🔥 Too Warm - Cooling needed</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="stuffy" id="stuffy" />
-                      <Label htmlFor="stuffy">💨 Stuffy - Ventilation needed</Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {/* Lights Left On */}
+              {/* Lights Turned Off */}
               <div className="space-y-3">
                 <Label className="text-base font-medium flex items-center">
                   <Lightbulb className="h-4 w-4 mr-2" />
-                  Lights Left On After Class
-                </Label>
-                <Select value={sleepHours.toString()} onValueChange={(value) => setSleepHours(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0 lights - All turned off</SelectItem>
-                    <SelectItem value="1">1-2 lights left on</SelectItem>
-                    <SelectItem value="2">3-5 lights left on</SelectItem>
-                    <SelectItem value="3">6+ lights left on</SelectItem>
-                    <SelectItem value="4">All lights left on</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Electronics Turned Off */}
-              <div className="space-y-3">
-                <Label className="text-base font-medium flex items-center">
-                  <Monitor className="h-4 w-4 mr-2" />
-                  Electronics Management
+                  Lights
                 </Label>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="electronics"
-                    checked={breakfastEaten}
-                    onCheckedChange={(checked) => setBreakfastEaten(checked === true)}
+                    id="lights"
+                    checked={lightsOff}
+                    onCheckedChange={(checked) => setLightsOff(checked === true)}
                   />
-                  <Label htmlFor="electronics">All electronics were properly turned off after use</Label>
+                  <Label htmlFor="lights">Lights were turned off when leaving the classroom</Label>
                 </div>
               </div>
 
-              {/* HVAC Usage */}
+              {/* Smart Board Turned Off */}
               <div className="space-y-3">
                 <Label className="text-base font-medium flex items-center">
-                  <AirVent className="h-4 w-4 mr-2" />
-                  Heating/Cooling Usage
+                  <Monitor className="h-4 w-4 mr-2" />
+                  Smart Board
                 </Label>
-                <RadioGroup value={physicalActivity} onValueChange={setPhysicalActivity}>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="none" id="none" />
-                      <Label htmlFor="none">None - No heating or cooling used</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="light" id="light" />
-                      <Label htmlFor="light">Minimal - Brief use only</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="moderate" id="moderate" />
-                      <Label htmlFor="moderate">Moderate - Used as needed</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="intense" id="intense" />
-                      <Label htmlFor="intense">Heavy - Continuous use throughout day</Label>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="smartboard"
+                    checked={smartBoardOff}
+                    onCheckedChange={(checked) => setSmartBoardOff(checked === true)}
+                  />
+                  <Label htmlFor="smartboard">Smart board was turned off after use</Label>
+                </div>
               </div>
 
               {/* Comments */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">
-                  Energy Savings Suggestions (Optional)
+                  Additional Notes (Optional)
                 </Label>
                 <Textarea
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
-                  placeholder="Any ideas for saving electricity in your classroom or school?"
+                  placeholder="Any additional observations about energy usage?"
                   rows={3}
                 />
               </div>
@@ -273,7 +172,7 @@ export default function EnergyPoll() {
                 className="w-full"
                 disabled={submitPollMutation.isPending}
               >
-                {submitPollMutation.isPending ? "Submitting..." : "Submit Electricity Report"}
+                {submitPollMutation.isPending ? "Submitting..." : "Submit Report"}
               </Button>
             </CardContent>
           </Card>
