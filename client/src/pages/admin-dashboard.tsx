@@ -23,7 +23,10 @@ import {
   Eye,
   Check,
   Flag,
-  Download
+  Download,
+  Zap,
+  Lightbulb,
+  Monitor
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { AuditTable } from "@/components/audit-table";
@@ -86,6 +89,12 @@ export default function AdminDashboard() {
         }, 500);
       }
     },
+  });
+
+  // Fetch energy polls
+  const { data: energyPolls = [] } = useQuery({
+    queryKey: ["/api/energy-polls"],
+    enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Update audit status mutation
@@ -436,6 +445,79 @@ export default function AdminDashboard() {
                 </div>
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Energy Reports */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="h-5 w-5 mr-2" />
+              Energy Reports
+            </CardTitle>
+            <p className="text-gray-600">
+              View electricity usage reports submitted by students
+            </p>
+          </CardHeader>
+          <CardContent>
+            {energyPolls && energyPolls.length > 0 ? (
+              <div className="space-y-3">
+                {energyPolls.slice(0, 10).map((poll: any) => (
+                  <div key={poll.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex space-x-2">
+                        {poll.sleepHours === 0 && (
+                          <div className="flex items-center space-x-1 text-green-600">
+                            <Lightbulb className="h-4 w-4" />
+                            <span className="text-sm">Lights Off</span>
+                          </div>
+                        )}
+                        {poll.breakfastEaten && (
+                          <div className="flex items-center space-x-1 text-blue-600">
+                            <Monitor className="h-4 w-4" />
+                            <span className="text-sm">Smart Board Off</span>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{poll.className}</p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(poll.createdAt).toLocaleDateString()} at {new Date(poll.createdAt).toLocaleTimeString()}
+                        </p>
+                        {poll.comments && (
+                          <p className="text-sm text-gray-600 italic">"{poll.comments}"</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center space-x-1">
+                        {poll.sleepHours === 0 ? (
+                          <span className="text-green-600">✓</span>
+                        ) : (
+                          <span className="text-red-600">✗</span>
+                        )}
+                        <span className="text-xs text-gray-500">Lights</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {poll.breakfastEaten ? (
+                          <span className="text-green-600">✓</span>
+                        ) : (
+                          <span className="text-red-600">✗</span>
+                        )}
+                        <span className="text-xs text-gray-500">Board</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {energyPolls.length > 10 && (
+                  <p className="text-sm text-gray-500 text-center">
+                    Showing latest 10 reports ({energyPolls.length} total)
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No energy reports submitted yet</p>
+            )}
           </CardContent>
         </Card>
 
