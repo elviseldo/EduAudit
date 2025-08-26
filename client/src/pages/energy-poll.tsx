@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Battery, Moon, Coffee, Activity } from "lucide-react";
+import { ArrowLeft, Zap, Lightbulb, Monitor, AirVent, Thermometer } from "lucide-react";
 
 export default function EnergyPoll() {
   const { user, isAuthenticated } = useAuth();
@@ -20,11 +20,11 @@ export default function EnergyPoll() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  const [energyLevel, setEnergyLevel] = useState([5]);
-  const [mood, setMood] = useState("");
-  const [sleepHours, setSleepHours] = useState(8);
-  const [breakfastEaten, setBreakfastEaten] = useState(false);
-  const [physicalActivity, setPhysicalActivity] = useState("");
+  const [energyLevel, setEnergyLevel] = useState([3]); // 1-5 scale for classroom energy efficiency
+  const [mood, setMood] = useState(""); // Room temperature comfort
+  const [sleepHours, setSleepHours] = useState(0); // Lights left on count
+  const [breakfastEaten, setBreakfastEaten] = useState(false); // Electronics properly turned off
+  const [physicalActivity, setPhysicalActivity] = useState(""); // HVAC usage level
   const [comments, setComments] = useState("");
 
   // Check if already submitted today
@@ -92,10 +92,10 @@ export default function EnergyPoll() {
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
-              <Battery className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <Zap className="h-12 w-12 text-green-500 mx-auto mb-4" />
               <h1 className="text-xl font-bold text-gray-900 mb-2">Already Submitted</h1>
               <p className="text-sm text-gray-600 mb-4">
-                You've already submitted your energy poll for today. Thank you!
+                You've already submitted your electricity usage report for today. Thank you!
               </p>
               <Button onClick={() => setLocation("/")} variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -123,8 +123,8 @@ export default function EnergyPoll() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Daily Energy Poll</h1>
-              <p className="text-gray-600">Help us understand how you're feeling today</p>
+              <h1 className="text-2xl font-bold text-gray-900">Daily Electricity Report</h1>
+              <p className="text-gray-600">Help us track and reduce electrical energy usage at school</p>
             </div>
           </div>
         </div>
@@ -136,122 +136,119 @@ export default function EnergyPoll() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Battery className="h-5 w-5 mr-2 text-primary" />
-                How are you feeling today?
+                <Zap className="h-5 w-5 mr-2 text-primary" />
+                Classroom Electricity Usage Report
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Energy Level */}
+              {/* Energy Efficiency */}
               <div className="space-y-3">
-                <Label className="text-base font-medium">
-                  Energy Level: {energyLevel[0]}/10
+                <Label className="text-base font-medium flex items-center">
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Classroom Energy Efficiency: {energyLevel[0]}/5
                 </Label>
                 <Slider
                   value={energyLevel}
                   onValueChange={setEnergyLevel}
-                  max={10}
+                  max={5}
                   min={1}
                   step={1}
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-gray-500">
-                  <span>Very Low</span>
-                  <span>Very High</span>
+                  <span>Poor</span>
+                  <span>Excellent</span>
                 </div>
+                <p className="text-xs text-gray-600">Rate how efficiently electricity was used in your classroom today</p>
               </div>
 
-              {/* Mood */}
+              {/* Room Temperature */}
               <div className="space-y-3">
-                <Label className="text-base font-medium">Current Mood</Label>
+                <Label className="text-base font-medium flex items-center">
+                  <Thermometer className="h-4 w-4 mr-2" />
+                  Room Temperature Comfort
+                </Label>
                 <RadioGroup value={mood} onValueChange={setMood}>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="happy" id="happy" />
-                      <Label htmlFor="happy">😊 Happy</Label>
+                      <RadioGroupItem value="too_cold" id="too_cold" />
+                      <Label htmlFor="too_cold">❄️ Too Cold - Heating needed</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="focused" id="focused" />
-                      <Label htmlFor="focused">🎯 Focused</Label>
+                      <RadioGroupItem value="comfortable" id="comfortable" />
+                      <Label htmlFor="comfortable">✅ Comfortable - No adjustments needed</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="tired" id="tired" />
-                      <Label htmlFor="tired">😴 Tired</Label>
+                      <RadioGroupItem value="too_warm" id="too_warm" />
+                      <Label htmlFor="too_warm">🔥 Too Warm - Cooling needed</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="stressed" id="stressed" />
-                      <Label htmlFor="stressed">😰 Stressed</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="excited" id="excited" />
-                      <Label htmlFor="excited">🤩 Excited</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="calm" id="calm" />
-                      <Label htmlFor="calm">😌 Calm</Label>
+                      <RadioGroupItem value="stuffy" id="stuffy" />
+                      <Label htmlFor="stuffy">💨 Stuffy - Ventilation needed</Label>
                     </div>
                   </div>
                 </RadioGroup>
               </div>
 
-              {/* Sleep Hours */}
+              {/* Lights Left On */}
               <div className="space-y-3">
                 <Label className="text-base font-medium flex items-center">
-                  <Moon className="h-4 w-4 mr-2" />
-                  Hours of Sleep Last Night
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Lights Left On After Class
                 </Label>
                 <Select value={sleepHours.toString()} onValueChange={(value) => setSleepHours(parseInt(value))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 3).map((hours) => (
-                      <SelectItem key={hours} value={hours.toString()}>
-                        {hours} hours
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="0">0 lights - All turned off</SelectItem>
+                    <SelectItem value="1">1-2 lights left on</SelectItem>
+                    <SelectItem value="2">3-5 lights left on</SelectItem>
+                    <SelectItem value="3">6+ lights left on</SelectItem>
+                    <SelectItem value="4">All lights left on</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Breakfast */}
+              {/* Electronics Turned Off */}
               <div className="space-y-3">
                 <Label className="text-base font-medium flex items-center">
-                  <Coffee className="h-4 w-4 mr-2" />
-                  Breakfast
+                  <Monitor className="h-4 w-4 mr-2" />
+                  Electronics Management
                 </Label>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="breakfast"
+                    id="electronics"
                     checked={breakfastEaten}
-                    onCheckedChange={setBreakfastEaten}
+                    onCheckedChange={(checked) => setBreakfastEaten(checked === true)}
                   />
-                  <Label htmlFor="breakfast">I ate breakfast this morning</Label>
+                  <Label htmlFor="electronics">All electronics were properly turned off after use</Label>
                 </div>
               </div>
 
-              {/* Physical Activity */}
+              {/* HVAC Usage */}
               <div className="space-y-3">
                 <Label className="text-base font-medium flex items-center">
-                  <Activity className="h-4 w-4 mr-2" />
-                  Physical Activity Level
+                  <AirVent className="h-4 w-4 mr-2" />
+                  Heating/Cooling Usage
                 </Label>
                 <RadioGroup value={physicalActivity} onValueChange={setPhysicalActivity}>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="none" id="none" />
-                      <Label htmlFor="none">None - mostly sitting/resting</Label>
+                      <Label htmlFor="none">None - No heating or cooling used</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="light" id="light" />
-                      <Label htmlFor="light">Light - walking, light stretching</Label>
+                      <Label htmlFor="light">Minimal - Brief use only</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="moderate" id="moderate" />
-                      <Label htmlFor="moderate">Moderate - sports, gym, cycling</Label>
+                      <Label htmlFor="moderate">Moderate - Used as needed</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="intense" id="intense" />
-                      <Label htmlFor="intense">Intense - running, competitive sports</Label>
+                      <Label htmlFor="intense">Heavy - Continuous use throughout day</Label>
                     </div>
                   </div>
                 </RadioGroup>
@@ -260,12 +257,12 @@ export default function EnergyPoll() {
               {/* Comments */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">
-                  Additional Comments (Optional)
+                  Energy Savings Suggestions (Optional)
                 </Label>
                 <Textarea
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
-                  placeholder="Anything else affecting your energy today?"
+                  placeholder="Any ideas for saving electricity in your classroom or school?"
                   rows={3}
                 />
               </div>
@@ -276,7 +273,7 @@ export default function EnergyPoll() {
                 className="w-full"
                 disabled={submitPollMutation.isPending}
               >
-                {submitPollMutation.isPending ? "Submitting..." : "Submit Energy Poll"}
+                {submitPollMutation.isPending ? "Submitting..." : "Submit Electricity Report"}
               </Button>
             </CardContent>
           </Card>
