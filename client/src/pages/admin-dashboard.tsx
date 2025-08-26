@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { 
   ClipboardCheck, 
   LogOut, 
@@ -20,7 +22,8 @@ import {
   TrendingUp,
   Eye,
   Check,
-  Flag
+  Flag,
+  Download
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { AuditTable } from "@/components/audit-table";
@@ -186,11 +189,80 @@ export default function AdminDashboard() {
   };
 
   const handleExportReports = () => {
-    toast({
-      title: "Export Started",
-      description: "Generating report... This may take a moment.",
-    });
-    // TODO: Implement actual export functionality
+    try {
+      // Prepare data for Excel export
+      const exportData = audits.map((audit) => ({
+        'Audit ID': audit.id,
+        'Asset Type': audit.assetType,
+        'Item Name': audit.itemName,
+        'Asset ID': audit.assetId || 'N/A',
+        'Brand/Model': audit.brandModel || 'N/A',
+        'Building': audit.building,
+        'Floor': audit.floor,
+        'Grade': audit.grade,
+        'Location Notes': audit.locationNotes || 'N/A',
+        'Condition': audit.condition,
+        'Description': audit.description,
+        'Priority': audit.priority,
+        'Safety Concern': audit.safetyConcern ? 'Yes' : 'No',
+        'Status': audit.status,
+        'Review Notes': audit.reviewNotes || 'N/A',
+        'Reviewed By': audit.reviewedBy || 'N/A',
+        'Created At': new Date(audit.createdAt).toLocaleDateString(),
+        'Reviewed At': audit.reviewedAt ? new Date(audit.reviewedAt).toLocaleDateString() : 'N/A',
+      }));
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths for better formatting
+      const columnWidths = [
+        { wch: 10 }, // Audit ID
+        { wch: 15 }, // Asset Type
+        { wch: 20 }, // Item Name
+        { wch: 12 }, // Asset ID
+        { wch: 15 }, // Brand/Model
+        { wch: 12 }, // Building
+        { wch: 8 },  // Floor
+        { wch: 12 }, // Grade
+        { wch: 25 }, // Location Notes
+        { wch: 12 }, // Condition
+        { wch: 30 }, // Description
+        { wch: 10 }, // Priority
+        { wch: 12 }, // Safety Concern
+        { wch: 12 }, // Status
+        { wch: 25 }, // Review Notes
+        { wch: 15 }, // Reviewed By
+        { wch: 12 }, // Created At
+        { wch: 12 }, // Reviewed At
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Reports');
+
+      // Generate Excel file and trigger download
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      
+      const currentDate = new Date().toISOString().split('T')[0];
+      const filename = `school-audit-reports-${currentDate}.xlsx`;
+      
+      saveAs(blob, filename);
+
+      toast({
+        title: "Export Successful",
+        description: `Downloaded ${audits.length} audit reports to ${filename}`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate Excel report. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -318,10 +390,10 @@ export default function AdminDashboard() {
                 className="p-4 h-auto flex-col space-y-2 hover:border-primary hover:bg-blue-50"
                 onClick={handleExportReports}
               >
-                <FileText className="text-primary text-xl" />
+                <Download className="text-primary text-xl" />
                 <div className="text-center">
-                  <h3 className="font-medium text-gray-900">Export Reports</h3>
-                  <p className="text-sm text-gray-500">Generate and download audit reports</p>
+                  <h3 className="font-medium text-gray-900">Export to Excel</h3>
+                  <p className="text-sm text-gray-500">Download audit reports as Excel file</p>
                 </div>
               </Button>
               <Button
