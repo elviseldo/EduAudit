@@ -4,6 +4,7 @@ import {
   assetCatalog,
   buildings,
   maintenanceLogs,
+  energyPolls,
   type User,
   type UpsertUser,
   type Audit,
@@ -14,6 +15,8 @@ import {
   type InsertBuilding,
   type MaintenanceLog,
   type InsertMaintenanceLog,
+  type EnergyPoll,
+  type InsertEnergyPoll,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike } from "drizzle-orm";
@@ -50,6 +53,13 @@ export interface IStorage {
   getMaintenanceLogsByAudit(auditId: number): Promise<MaintenanceLog[]>;
   getAllMaintenanceLogs(): Promise<MaintenanceLog[]>;
   updateMaintenanceLog(id: number, log: Partial<InsertMaintenanceLog>): Promise<MaintenanceLog>;
+  
+  // Energy poll operations
+  createEnergyPoll(poll: InsertEnergyPoll): Promise<EnergyPoll>;
+  getEnergyPollsByUser(userId: string): Promise<EnergyPoll[]>;
+  getEnergyPollsByClass(className: string): Promise<EnergyPoll[]>;
+  getAllEnergyPolls(): Promise<EnergyPoll[]>;
+  getTodaysEnergyPoll(userId: string): Promise<EnergyPoll | undefined>;
 }
 
 export interface AuditFilters {
@@ -302,6 +312,53 @@ export class DatabaseStorage implements IStorage {
       .where(eq(maintenanceLogs.id, id))
       .returning();
     return log;
+  }
+
+  // Energy poll operations
+  async createEnergyPoll(pollData: InsertEnergyPoll): Promise<EnergyPoll> {
+    const [poll] = await db
+      .insert(energyPolls)
+      .values(pollData)
+      .returning();
+    return poll;
+  }
+
+  async getEnergyPollsByUser(userId: string): Promise<EnergyPoll[]> {
+    return await db.select()
+      .from(energyPolls)
+      .where(eq(energyPolls.userId, userId))
+      .orderBy(desc(energyPolls.createdAt));
+  }
+
+  async getEnergyPollsByClass(className: string): Promise<EnergyPoll[]> {
+    return await db.select()
+      .from(energyPolls)
+      .where(eq(energyPolls.className, className))
+      .orderBy(desc(energyPolls.createdAt));
+  }
+
+  async getAllEnergyPolls(): Promise<EnergyPoll[]> {
+    return await db.select()
+      .from(energyPolls)
+      .orderBy(desc(energyPolls.createdAt));
+  }
+
+  async getTodaysEnergyPoll(userId: string): Promise<EnergyPoll | undefined> {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+
+    const polls = await db.select()
+      .from(energyPolls)
+      .where(eq(energyPolls.userId, userId))
+      .orderBy(desc(energyPolls.createdAt));
+    
+    // Filter for today's polls in JavaScript since date comparison in SQL can be tricky
+    const todaysPoll = polls.find(poll => {
+      const pollDate = new Date(poll.createdAt).toISOString().split('T')[0];
+      return pollDate === todayStr;
+    });
+    
+    return todaysPoll;
   }
 }
 

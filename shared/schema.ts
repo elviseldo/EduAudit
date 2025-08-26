@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").notNull().default("student"), // student or admin
   studentId: varchar("student_id"),
+  className: varchar("class_name"), // e.g., "Grade 7C"
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -154,6 +155,20 @@ export const maintenanceLogs = pgTable("maintenance_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Energy polls table
+export const energyPolls = pgTable("energy_polls", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  className: varchar("class_name").notNull(),
+  energyLevel: integer("energy_level").notNull(), // 1-10 scale
+  mood: varchar("mood").notNull(), // happy, tired, focused, stressed, etc.
+  sleepHours: integer("sleep_hours"), // hours of sleep last night
+  breakfastEaten: boolean("breakfast_eaten").default(false),
+  physicalActivity: varchar("physical_activity"), // none, light, moderate, intense
+  comments: text("comments"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Enhanced relations
 export const assetCatalogRelations = relations(assetCatalog, ({ many }) => ({
   audits: many(audits),
@@ -172,6 +187,19 @@ export const maintenanceLogsRelations = relations(maintenanceLogs, ({ one }) => 
     fields: [maintenanceLogs.performedBy],
     references: [users.id],
   }),
+}));
+
+export const energyPollsRelations = relations(energyPolls, ({ one }) => ({
+  user: one(users, {
+    fields: [energyPolls.userId],
+    references: [users.id],
+  }),
+}));
+
+// Update users relations to include energy polls
+export const usersEnhancedRelations = relations(users, ({ many }) => ({
+  audits: many(audits),
+  energyPolls: many(energyPolls),
 }));
 
 // Update audits relations to include maintenance logs
@@ -205,6 +233,11 @@ export const insertMaintenanceLogSchema = createInsertSchema(maintenanceLogs).om
   createdAt: true,
 });
 
+export const insertEnergyPollSchema = createInsertSchema(energyPolls).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for new tables
 export type AssetCatalog = typeof assetCatalog.$inferSelect;
 export type InsertAssetCatalog = z.infer<typeof insertAssetCatalogSchema>;
@@ -212,3 +245,5 @@ export type Building = typeof buildings.$inferSelect;
 export type InsertBuilding = z.infer<typeof insertBuildingSchema>;
 export type MaintenanceLog = typeof maintenanceLogs.$inferSelect;
 export type InsertMaintenanceLog = z.infer<typeof insertMaintenanceLogSchema>;
+export type EnergyPoll = typeof energyPolls.$inferSelect;
+export type InsertEnergyPoll = z.infer<typeof insertEnergyPollSchema>;

@@ -9,6 +9,7 @@ import Landing from "@/pages/landing";
 import StudentDashboard from "@/pages/student-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AuditForm from "@/pages/audit-form";
+import EnergyPoll from "@/pages/energy-poll";
 
 function Router() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
             <>
               <Route path="/" component={StudentDashboard} />
               <Route path="/audit/new" component={AuditForm} />
+              <Route path="/energy-poll" component={EnergyPoll} />
             </>
           )}
         </>

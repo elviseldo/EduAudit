@@ -17,13 +17,15 @@ import {
   DoorOpen,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Battery,
+  Calendar
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
-import type { Audit, UserAuditStats } from "@shared/schema";
+import type { Audit, UserAuditStats, EnergyPoll, User } from "@shared/schema";
 
 export default function StudentDashboard() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth() as { user: User | null, isLoading: boolean, isAuthenticated: boolean };
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -44,39 +46,21 @@ export default function StudentDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch user's audits
-  const { data: audits = [], isLoading: auditsLoading } = useQuery({
+  const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
     queryKey: ["/api/audits"],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Fetch user stats
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<UserAuditStats>({
     queryKey: ["/api/stats"],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
+  });
+
+  // Check if energy poll submitted today
+  const { data: todaysPoll } = useQuery<EnergyPoll | null>({
+    queryKey: ["/api/energy-polls/today"],
+    enabled: isAuthenticated,
   });
 
   // Role switching mutation
@@ -246,6 +230,56 @@ export default function StudentDashboard() {
             color="yellow"
           />
         </div>
+
+        {/* Daily Energy Poll */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Battery className="h-5 w-5 mr-2" />
+              Daily Energy Poll
+            </CardTitle>
+            <p className="text-gray-600">
+              Help us understand student energy levels and well-being.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {todaysPoll ? (
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="font-medium text-green-900">Poll Completed</p>
+                    <p className="text-sm text-green-700">
+                      Thank you for sharing your energy level today!
+                    </p>
+                  </div>
+                </div>
+                <Badge className="bg-green-100 text-green-800">
+                  Energy: {todaysPoll.energyLevel}/10
+                </Badge>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-900">Ready for Today's Poll</p>
+                    <p className="text-sm text-blue-700">
+                      Share how you're feeling and help improve our school environment.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setLocation('/energy-poll')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Battery className="h-4 w-4 mr-2" />
+                  Take Poll
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Create New Audit Section */}
         <Card className="mb-8">

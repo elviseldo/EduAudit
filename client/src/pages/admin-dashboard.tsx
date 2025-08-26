@@ -157,19 +157,35 @@ export default function AdminDashboard() {
   };
 
   const handleSwitchToStudent = () => {
-    const studentId = prompt("Enter your Student ID (required for student role):");
-    if (studentId && studentId.trim()) {
-      switchRoleMutation.mutate({
-        role: "student",
-        studentId: studentId.trim(),
-      });
-    } else if (studentId !== null) {
-      toast({
-        title: "Student ID Required",
-        description: "Please enter a valid student ID to switch to student role.",
-        variant: "destructive",
-      });
+    const studentId = prompt("Enter your Student ID:");
+    if (!studentId || !studentId.trim()) {
+      if (studentId !== null) {
+        toast({
+          title: "Student ID Required",
+          description: "Please enter a valid student ID to continue.",
+          variant: "destructive",
+        });
+      }
+      return;
     }
+
+    const className = prompt("Enter your Class Name (e.g., Grade 7C):");
+    if (!className || !className.trim()) {
+      if (className !== null) {
+        toast({
+          title: "Class Name Required",
+          description: "Please enter a valid class name to continue.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    switchRoleMutation.mutate({
+      role: "student",
+      studentId: studentId.trim(),
+      className: className.trim(),
+    });
   };
 
   const handleApproveAudit = (auditId: number) => {
