@@ -126,10 +126,11 @@ export default function AdminDashboard() {
 
   // Role switching mutation
   const switchRoleMutation = useMutation({
-    mutationFn: async ({ role, studentId }: { role: string; studentId?: string }) => {
+    mutationFn: async ({ role, studentId, className }: { role: string; studentId?: string; className?: string }) => {
       await apiRequest("PATCH", "/api/user/profile", {
         role,
         studentId,
+        className,
       });
     },
     onSuccess: () => {
