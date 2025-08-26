@@ -18,8 +18,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Battery,
-  Calendar
+  Lightbulb,
+  Calendar,
+  Zap
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import type { Audit, UserAuditStats, EnergyPoll, User } from "@shared/schema";
@@ -235,11 +236,11 @@ export default function StudentDashboard() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Battery className="h-5 w-5 mr-2" />
-              Daily Energy Poll
+              <Lightbulb className="h-5 w-5 mr-2" />
+              Daily Electricity Report
             </CardTitle>
             <p className="text-gray-600">
-              Help us understand student energy levels and well-being.
+              Help us track and reduce electrical energy usage at school.
             </p>
           </CardHeader>
           <CardContent>
@@ -248,14 +249,14 @@ export default function StudentDashboard() {
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div>
-                    <p className="font-medium text-green-900">Poll Completed</p>
+                    <p className="font-medium text-green-900">Report Completed</p>
                     <p className="text-sm text-green-700">
-                      Thank you for sharing your energy level today!
+                      Thank you for submitting your electricity usage report!
                     </p>
                   </div>
                 </div>
                 <Badge className="bg-green-100 text-green-800">
-                  Energy: {todaysPoll.energyLevel}/10
+                  Efficiency: {todaysPoll.energyLevel}/5
                 </Badge>
               </div>
             ) : (
@@ -263,9 +264,9 @@ export default function StudentDashboard() {
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <div>
-                    <p className="font-medium text-blue-900">Ready for Today's Poll</p>
+                    <p className="font-medium text-blue-900">Ready for Today's Report</p>
                     <p className="text-sm text-blue-700">
-                      Share how you're feeling and help improve our school environment.
+                      Share electricity usage data and help reduce energy consumption.
                     </p>
                   </div>
                 </div>
@@ -273,8 +274,8 @@ export default function StudentDashboard() {
                   onClick={() => setLocation('/energy-poll')}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <Battery className="h-4 w-4 mr-2" />
-                  Take Poll
+                  <Zap className="h-4 w-4 mr-2" />
+                  Submit Report
                 </Button>
               </div>
             )}
