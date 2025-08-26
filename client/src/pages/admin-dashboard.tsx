@@ -242,11 +242,11 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center space-x-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={handleSwitchToStudent}
                   disabled={switchRoleMutation.isPending}
-                  className="text-blue-600 hover:bg-blue-50 px-2 py-1 text-xs"
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50 text-sm"
                 >
                   {switchRoleMutation.isPending ? "..." : "Student"}
                 </Button>
