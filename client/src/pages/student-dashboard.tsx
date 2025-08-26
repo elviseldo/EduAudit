@@ -58,11 +58,7 @@ export default function StudentDashboard() {
     enabled: isAuthenticated,
   });
 
-  // Check if energy poll submitted today
-  const { data: todaysPoll } = useQuery<EnergyPoll | null>({
-    queryKey: ["/api/energy-polls/today"],
-    enabled: isAuthenticated,
-  });
+  // Remove daily poll restriction - students can submit multiple reports
 
   // Role switching mutation
   const switchRoleMutation = useMutation({
@@ -244,41 +240,24 @@ export default function StudentDashboard() {
             </p>
           </CardHeader>
           <CardContent>
-            {todaysPoll ? (
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="font-medium text-green-900">Report Completed</p>
-                    <p className="text-sm text-green-700">
-                      Thank you for submitting your electricity usage report!
-                    </p>
-                  </div>
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-900">Classroom Energy Reports</p>
+                  <p className="text-sm text-blue-700">
+                    Report when lights and smart boards are turned off in any classroom.
+                  </p>
                 </div>
-                <Badge className="bg-green-100 text-green-800">
-                  Efficiency: {todaysPoll.energyLevel}/5
-                </Badge>
               </div>
-            ) : (
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium text-blue-900">Ready for Today's Report</p>
-                    <p className="text-sm text-blue-700">
-                      Share electricity usage data and help reduce energy consumption.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => setLocation('/energy-poll')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Submit Report
-                </Button>
-              </div>
-            )}
+              <Button
+                onClick={() => setLocation('/energy-poll')}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                New Report
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
