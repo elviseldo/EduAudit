@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pollData = {
         ...req.body,
         userId,
-        className: user.className || 'Unknown',
+        className: req.body.className || user.className || 'Unknown',
       };
       
       const validatedData = insertEnergyPollSchema.parse(pollData);
