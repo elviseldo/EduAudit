@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { 
   ClipboardCheck, 
@@ -78,8 +79,41 @@ export default function StudentDashboard() {
     },
   });
 
+  // Role switching mutation
+  const switchRoleMutation = useMutation({
+    mutationFn: async ({ role }: { role: string }) => {
+      await apiRequest("PATCH", "/api/user/profile", {
+        role,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Role Updated",
+        description: "Successfully switched to admin role. Redirecting...",
+      });
+      // Small delay to let the user see the message, then redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to switch role. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLogout = () => {
     window.location.href = "/api/logout";
+  };
+
+  const handleSwitchToAdmin = () => {
+    switchRoleMutation.mutate({
+      role: "admin",
+    });
   };
 
   const handleCreateAudit = (assetType: string) => {
@@ -155,14 +189,25 @@ export default function StudentDashboard() {
                 </span>
                 <Badge className="bg-blue-100 text-primary">Student</Badge>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSwitchToAdmin}
+                  disabled={switchRoleMutation.isPending}
+                  className="text-purple-600 border-purple-600 hover:bg-purple-50 text-sm"
+                >
+                  {switchRoleMutation.isPending ? "..." : "Admin"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
