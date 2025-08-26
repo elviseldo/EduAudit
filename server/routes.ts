@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupMicrosoftAuth, isMicrosoftAuthenticated } from "./microsoftAuth";
-import { insertAuditSchema } from "@shared/schema";
+import { insertAuditSchema, insertEnergyPollSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -201,14 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/user/profile', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { role, studentId } = req.body;
+      const { role, studentId, className } = req.body;
       
       if (!role || !['student', 'admin'].includes(role)) {
         return res.status(400).json({ message: "Valid role is required" });
       }
 
-      if (role === 'student' && !studentId) {
-        return res.status(400).json({ message: "Student ID is required for student role" });
+      if (role === 'student' && (!studentId || !className)) {
+        return res.status(400).json({ message: "Student ID and class name are required for student role" });
       }
 
       const user = await storage.getUser(userId);
@@ -220,6 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...user,
         role,
         studentId: role === 'student' ? studentId : undefined,
+        className: role === 'student' ? className : undefined,
       });
 
       res.json(updatedUser);
@@ -327,6 +328,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating maintenance log:", error);
       res.status(500).json({ message: "Failed to create maintenance log" });
+    }
+  });
+
+  // Energy poll routes
+  app.post('/api/energy-polls', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'student') {
+        return res.status(403).json({ message: "Student access required" });
+      }
+
+      // Check if user already submitted a poll today
+      const todaysPoll = await storage.getTodaysEnergyPoll(userId);
+      if (todaysPoll) {
+        return res.status(400).json({ message: "Energy poll already submitted today" });
+      }
+
+      const pollData = {
+        ...req.body,
+        userId,
+        className: user.className || 'Unknown',
+      };
+      
+      const validatedData = insertEnergyPollSchema.parse(pollData);
+      const poll = await storage.createEnergyPoll(validatedData);
+      
+      res.status(201).json(poll);
+    } catch (error) {
+      console.error("Error creating energy poll:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid poll data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create energy poll" });
+      }
+    }
+  });
+
+  app.get('/api/energy-polls', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let polls;
+      if (user.role === 'admin') {
+        // Admin can see all polls
+        polls = await storage.getAllEnergyPolls();
+      } else {
+        // Students can only see their own polls
+        polls = await storage.getEnergyPollsByUser(userId);
+      }
+      
+      res.json(polls);
+    } catch (error) {
+      console.error("Error fetching energy polls:", error);
+      res.status(500).json({ message: "Failed to fetch energy polls" });
+    }
+  });
+
+  app.get('/api/energy-polls/today', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const poll = await storage.getTodaysEnergyPoll(userId);
+      res.json(poll || null);
+    } catch (error) {
+      console.error("Error fetching today's energy poll:", error);
+      res.status(500).json({ message: "Failed to fetch today's energy poll" });
+    }
+  });
+
+  app.get('/api/energy-polls/class/:className', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const className = req.params.className;
+      const polls = await storage.getEnergyPollsByClass(className);
+      res.json(polls);
+    } catch (error) {
+      console.error("Error fetching energy polls by class:", error);
+      res.status(500).json({ message: "Failed to fetch energy polls by class" });
     }
   });
 
