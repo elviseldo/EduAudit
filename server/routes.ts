@@ -341,11 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Student access required" });
       }
 
-      // Check if user already submitted a poll today
-      const todaysPoll = await storage.getTodaysEnergyPoll(userId);
-      if (todaysPoll) {
-        return res.status(400).json({ message: "Energy poll already submitted today" });
-      }
+      // Allow multiple reports per day - remove the daily limit check
 
       const pollData = {
         ...req.body,
