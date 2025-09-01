@@ -133,8 +133,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllAudits(filters?: AuditFilters): Promise<Audit[]> {
-    let query = db.select().from(audits);
-    
     const conditions = [];
     
     if (filters?.status && filters.status !== "all") {
@@ -168,10 +166,15 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      return await db.select()
+        .from(audits)
+        .where(and(...conditions))
+        .orderBy(desc(audits.createdAt));
     }
     
-    return await query.orderBy(desc(audits.createdAt));
+    return await db.select()
+      .from(audits)
+      .orderBy(desc(audits.createdAt));
   }
 
   async updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit> {
@@ -354,6 +357,7 @@ export class DatabaseStorage implements IStorage {
     
     // Filter for today's polls in JavaScript since date comparison in SQL can be tricky
     const todaysPoll = polls.find(poll => {
+      if (!poll.createdAt) return false;
       const pollDate = new Date(poll.createdAt).toISOString().split('T')[0];
       return pollDate === todayStr;
     });
