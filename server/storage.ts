@@ -366,4 +366,352 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory storage implementation as fallback for database issues
+export class MemStorage implements IStorage {
+  private users = new Map<string, User>();
+  private audits = new Map<number, Audit>();
+  private assetCatalogItems = new Map<number, AssetCatalog>();
+  private buildingsList = new Map<number, Building>();
+  private maintenanceLogsList = new Map<number, MaintenanceLog>();
+  private energyPollsList = new Map<number, EnergyPoll>();
+  private auditIdCounter = 1;
+  private assetCatalogIdCounter = 1;
+  private buildingIdCounter = 1;
+  private maintenanceLogIdCounter = 1;
+  private energyPollIdCounter = 1;
+
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existingUser = this.users.get(userData.id);
+    const now = new Date();
+    
+    const user: User = {
+      ...userData,
+      email: userData.email || null,
+      firstName: userData.firstName || null,
+      lastName: userData.lastName || null,
+      profileImageUrl: userData.profileImageUrl || null,
+      studentId: userData.studentId || null,
+      className: userData.className || null,
+      createdAt: existingUser?.createdAt || now,
+      updatedAt: now,
+    };
+    
+    this.users.set(userData.id, user);
+    return user;
+  }
+
+  // Audit operations
+  async createAudit(auditData: InsertAudit): Promise<Audit> {
+    const now = new Date();
+    const audit: Audit = {
+      ...auditData,
+      id: this.auditIdCounter++,
+      assetId: auditData.assetId || null,
+      brandModel: auditData.brandModel || null,
+      locationNotes: auditData.locationNotes || null,
+      reviewNotes: auditData.reviewNotes || null,
+      reviewedBy: auditData.reviewedBy || null,
+      photos: auditData.photos || [],
+      createdAt: now,
+      updatedAt: now,
+      reviewedAt: null,
+    };
+    
+    this.audits.set(audit.id, audit);
+    return audit;
+  }
+
+  async getAuditById(id: number): Promise<Audit | undefined> {
+    return this.audits.get(id);
+  }
+
+  async getAuditsByUser(userId: string): Promise<Audit[]> {
+    return Array.from(this.audits.values())
+      .filter(audit => audit.userId === userId)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async getAllAudits(filters?: AuditFilters): Promise<Audit[]> {
+    let audits = Array.from(this.audits.values());
+    
+    if (filters?.status && filters.status !== "all") {
+      audits = audits.filter(a => a.status === filters.status);
+    }
+    
+    if (filters?.priority && filters.priority !== "all") {
+      audits = audits.filter(a => a.priority === filters.priority);
+    }
+    
+    if (filters?.condition) {
+      audits = audits.filter(a => a.condition === filters.condition);
+    }
+    
+    if (filters?.assetType) {
+      audits = audits.filter(a => a.assetType === filters.assetType);
+    }
+    
+    if (filters?.building) {
+      audits = audits.filter(a => a.building === filters.building);
+    }
+    
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      audits = audits.filter(a => 
+        a.itemName.toLowerCase().includes(searchLower) ||
+        a.description.toLowerCase().includes(searchLower) ||
+        a.grade.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return audits.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit> {
+    const audit = this.audits.get(id);
+    if (!audit) {
+      throw new Error(`Audit with id ${id} not found`);
+    }
+    
+    const updatedAudit: Audit = {
+      ...audit,
+      status,
+      reviewNotes: reviewNotes || audit.reviewNotes,
+      reviewedBy: reviewedBy || audit.reviewedBy,
+      reviewedAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.audits.set(id, updatedAudit);
+    return updatedAudit;
+  }
+
+  async getAuditStats(): Promise<AuditStats> {
+    const allAudits = Array.from(this.audits.values());
+    
+    return {
+      totalAudits: allAudits.length,
+      pendingAudits: allAudits.filter(a => a.status === 'pending').length,
+      reviewedAudits: allAudits.filter(a => a.status === 'reviewed').length,
+      inProgressAudits: allAudits.filter(a => a.status === 'in_progress').length,
+      resolvedAudits: allAudits.filter(a => a.status === 'resolved').length,
+      highPriorityAudits: allAudits.filter(a => a.priority === 'high').length,
+      urgentAudits: allAudits.filter(a => a.priority === 'urgent').length,
+    };
+  }
+
+  async getUserAuditStats(userId: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId);
+    
+    return {
+      totalAudits: userAudits.length,
+      pendingAudits: userAudits.filter(a => a.status === 'pending').length,
+      reviewedAudits: userAudits.filter(a => a.status === 'reviewed').length,
+      inProgressAudits: userAudits.filter(a => a.status === 'in_progress').length,
+      resolvedAudits: userAudits.filter(a => a.status === 'resolved').length,
+    };
+  }
+
+  // Asset catalog operations
+  async createAssetCatalogItem(itemData: InsertAssetCatalog): Promise<AssetCatalog> {
+    const now = new Date();
+    const item: AssetCatalog = {
+      ...itemData,
+      id: this.assetCatalogIdCounter++,
+      brandModel: itemData.brandModel || null,
+      description: itemData.description || null,
+      expectedLifespan: itemData.expectedLifespan || null,
+      maintenanceSchedule: itemData.maintenanceSchedule || null,
+      isActive: itemData.isActive !== undefined ? itemData.isActive : true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.assetCatalogItems.set(item.id, item);
+    return item;
+  }
+
+  async getAssetCatalogItems(): Promise<AssetCatalog[]> {
+    return Array.from(this.assetCatalogItems.values())
+      .filter(item => item.isActive)
+      .sort((a, b) => a.assetType.localeCompare(b.assetType) || a.itemName.localeCompare(b.itemName));
+  }
+
+  async updateAssetCatalogItem(id: number, itemData: Partial<InsertAssetCatalog>): Promise<AssetCatalog> {
+    const item = this.assetCatalogItems.get(id);
+    if (!item) {
+      throw new Error(`Asset catalog item with id ${id} not found`);
+    }
+    
+    const updatedItem: AssetCatalog = {
+      ...item,
+      ...itemData,
+      updatedAt: new Date(),
+    };
+    
+    this.assetCatalogItems.set(id, updatedItem);
+    return updatedItem;
+  }
+
+  async deleteAssetCatalogItem(id: number): Promise<void> {
+    const item = this.assetCatalogItems.get(id);
+    if (item) {
+      const updatedItem: AssetCatalog = {
+        ...item,
+        isActive: false,
+        updatedAt: new Date(),
+      };
+      this.assetCatalogItems.set(id, updatedItem);
+    }
+  }
+
+  // Building operations
+  async createBuilding(buildingData: InsertBuilding): Promise<Building> {
+    const now = new Date();
+    const building: Building = {
+      ...buildingData,
+      id: this.buildingIdCounter++,
+      address: buildingData.address || null,
+      floors: buildingData.floors || 1,
+      isActive: buildingData.isActive !== undefined ? buildingData.isActive : true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.buildingsList.set(building.id, building);
+    return building;
+  }
+
+  async getBuildings(): Promise<Building[]> {
+    return Array.from(this.buildingsList.values())
+      .filter(building => building.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async updateBuilding(id: number, buildingData: Partial<InsertBuilding>): Promise<Building> {
+    const building = this.buildingsList.get(id);
+    if (!building) {
+      throw new Error(`Building with id ${id} not found`);
+    }
+    
+    const updatedBuilding: Building = {
+      ...building,
+      ...buildingData,
+      updatedAt: new Date(),
+    };
+    
+    this.buildingsList.set(id, updatedBuilding);
+    return updatedBuilding;
+  }
+
+  async deleteBuilding(id: number): Promise<void> {
+    const building = this.buildingsList.get(id);
+    if (building) {
+      const updatedBuilding: Building = {
+        ...building,
+        isActive: false,
+        updatedAt: new Date(),
+      };
+      this.buildingsList.set(id, updatedBuilding);
+    }
+  }
+
+  // Maintenance log operations
+  async createMaintenanceLog(logData: InsertMaintenanceLog): Promise<MaintenanceLog> {
+    const now = new Date();
+    const log: MaintenanceLog = {
+      ...logData,
+      id: this.maintenanceLogIdCounter++,
+      cost: logData.cost || null,
+      nextMaintenanceDate: logData.nextMaintenanceDate || null,
+      completedAt: logData.completedAt || now,
+      createdAt: now,
+    };
+    
+    this.maintenanceLogsList.set(log.id, log);
+    return log;
+  }
+
+  async getMaintenanceLogsByAudit(auditId: number): Promise<MaintenanceLog[]> {
+    return Array.from(this.maintenanceLogsList.values())
+      .filter(log => log.auditId === auditId)
+      .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+  }
+
+  async getAllMaintenanceLogs(): Promise<MaintenanceLog[]> {
+    return Array.from(this.maintenanceLogsList.values())
+      .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+  }
+
+  async updateMaintenanceLog(id: number, logData: Partial<InsertMaintenanceLog>): Promise<MaintenanceLog> {
+    const log = this.maintenanceLogsList.get(id);
+    if (!log) {
+      throw new Error(`Maintenance log with id ${id} not found`);
+    }
+    
+    const updatedLog: MaintenanceLog = {
+      ...log,
+      ...logData,
+    };
+    
+    this.maintenanceLogsList.set(id, updatedLog);
+    return updatedLog;
+  }
+
+  // Energy poll operations
+  async createEnergyPoll(pollData: InsertEnergyPoll): Promise<EnergyPoll> {
+    const now = new Date();
+    const poll: EnergyPoll = {
+      ...pollData,
+      id: this.energyPollIdCounter++,
+      sleepHours: pollData.sleepHours || null,
+      breakfastEaten: pollData.breakfastEaten || null,
+      physicalActivity: pollData.physicalActivity || null,
+      comments: pollData.comments || null,
+      createdAt: now,
+    };
+    
+    this.energyPollsList.set(poll.id, poll);
+    return poll;
+  }
+
+  async getEnergyPollsByUser(userId: string): Promise<EnergyPoll[]> {
+    return Array.from(this.energyPollsList.values())
+      .filter(poll => poll.userId === userId)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async getEnergyPollsByClass(className: string): Promise<EnergyPoll[]> {
+    return Array.from(this.energyPollsList.values())
+      .filter(poll => poll.className === className)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async getAllEnergyPolls(): Promise<EnergyPoll[]> {
+    return Array.from(this.energyPollsList.values())
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async getTodaysEnergyPoll(userId: string): Promise<EnergyPoll | undefined> {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+
+    const polls = await this.getEnergyPollsByUser(userId);
+    
+    // Filter for today's polls
+    const todaysPoll = polls.find(poll => {
+      if (!poll.createdAt) return false;
+      const pollDate = new Date(poll.createdAt).toISOString().split('T')[0];
+      return pollDate === todayStr;
+    });
+    
+    return todaysPoll;
+  }
+}
+
+// Use in-memory storage to avoid database connection issues
+export const storage = new MemStorage();
