@@ -112,7 +112,31 @@ The system supports dual authentication with both Replit and Microsoft login. To
 
 Without these credentials, the system will only show Replit login option and work perfectly fine.
 
+## Analytics Feature
+
+The system includes a comprehensive analytics dashboard for administrators to gain insights into audit and energy usage patterns:
+
+### Analytics Capabilities
+- **Audit Trends**: 30-day trend analysis of audit submissions, pending, and resolved items
+- **Asset Analytics**: Distribution of asset types, condition breakdowns, and priority statistics  
+- **Building Analytics**: Usage patterns across different school buildings
+- **Energy Analytics**: Class performance metrics, energy level distributions, and activity correlations
+- **Response Time Tracking**: Average time from audit creation to resolution
+
+### Analytics Access
+- **Navigation**: Analytics button in admin dashboard header
+- **Permission**: Admin role required for access
+- **URL**: `/analytics` route for direct access
+- **API Endpoints**: `/api/analytics/overview` and `/api/analytics/energy`
+
+### Visualizations
+- Interactive charts using Recharts library (bar charts, line charts, pie charts)
+- Summary cards with key performance indicators
+- Tabbed interface for different analytics categories
+- Responsive design for mobile and desktop viewing
+
 ## Changelog
+- September 18, 2025. Added comprehensive analytics dashboard with data visualizations and trends analysis
 - July 01, 2025. Initial setup with role-based authentication
 - July 01, 2025. Added Microsoft OAuth integration (optional)
 - July 01, 2025. Updated terminology from "Room" to "Grade" with example "Grade 7C"
