@@ -19,7 +19,6 @@ import {
   CheckCircle,
   AlertTriangle,
   FileText,
-  Bell,
   TrendingUp,
   Eye,
   Check,
@@ -399,7 +398,7 @@ export default function AdminDashboard() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button
                 variant="outline"
                 className="p-4 h-auto flex-col space-y-2 hover:border-primary hover:bg-blue-50"
@@ -409,17 +408,6 @@ export default function AdminDashboard() {
                 <div className="text-center">
                   <h3 className="font-medium text-gray-900">Export to Excel</h3>
                   <p className="text-sm text-gray-500">Download audit reports as Excel file</p>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="p-4 h-auto flex-col space-y-2 hover:border-primary hover:bg-blue-50"
-                onClick={() => toast({ title: "Feature Coming Soon", description: "Notifications feature will be available soon" })}
-              >
-                <Bell className="text-primary text-xl" />
-                <div className="text-center">
-                  <h3 className="font-medium text-gray-900">Send Notifications</h3>
-                  <p className="text-sm text-gray-500">Notify students about audit status</p>
                 </div>
               </Button>
               <Button
