@@ -485,6 +485,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics routes
+  app.get('/api/analytics/overview', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const [audits, energyPolls] = await Promise.all([
+        storage.getAllAudits(),
+        storage.getAllEnergyPolls()
+      ]);
+
+      // Audit trends over time (last 30 days)
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      const auditTrends = Array.from({ length: 30 }, (_, i) => {
+        const date = new Date(thirtyDaysAgo.getTime() + i * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayAudits = audits.filter(audit => 
+          audit.createdAt && new Date(audit.createdAt).toISOString().split('T')[0] === dateStr
+        );
+        
+        return {
+          date: dateStr,
+          count: dayAudits.length,
+          pending: dayAudits.filter(a => a.status === 'pending').length,
+          resolved: dayAudits.filter(a => a.status === 'resolved').length
+        };
+      });
+
+      // Asset type distribution
+      const assetTypeStats = audits.reduce((acc: any, audit) => {
+        acc[audit.assetType] = (acc[audit.assetType] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Condition distribution
+      const conditionStats = audits.reduce((acc: any, audit) => {
+        acc[audit.condition] = (acc[audit.condition] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Priority distribution
+      const priorityStats = audits.reduce((acc: any, audit) => {
+        acc[audit.priority] = (acc[audit.priority] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Building usage
+      const buildingStats = audits.reduce((acc: any, audit) => {
+        acc[audit.building] = (acc[audit.building] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Energy poll trends
+      const energyTrends = Array.from({ length: 30 }, (_, i) => {
+        const date = new Date(thirtyDaysAgo.getTime() + i * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayPolls = energyPolls.filter(poll => 
+          poll.createdAt && new Date(poll.createdAt).toISOString().split('T')[0] === dateStr
+        );
+        
+        const avgEnergyLevel = dayPolls.length > 0 
+          ? dayPolls.reduce((sum, poll) => sum + poll.energyLevel, 0) / dayPolls.length 
+          : 0;
+
+        return {
+          date: dateStr,
+          count: dayPolls.length,
+          averageEnergyLevel: Math.round(avgEnergyLevel * 10) / 10
+        };
+      });
+
+      // Response time analytics (time from creation to resolution)
+      const resolvedAudits = audits.filter(a => a.status === 'resolved' && a.reviewedAt);
+      const avgResponseTime = resolvedAudits.length > 0 
+        ? resolvedAudits.reduce((sum, audit) => {
+            const created = new Date(audit.createdAt!).getTime();
+            const resolved = new Date(audit.reviewedAt!).getTime();
+            return sum + (resolved - created);
+          }, 0) / resolvedAudits.length / (1000 * 60 * 60 * 24) // Convert to days
+        : 0;
+
+      res.json({
+        auditTrends,
+        assetTypeStats,
+        conditionStats,
+        priorityStats,
+        buildingStats,
+        energyTrends,
+        summary: {
+          totalAudits: audits.length,
+          totalEnergyPolls: energyPolls.length,
+          averageResponseTime: Math.round(avgResponseTime * 10) / 10,
+          safetyIssues: audits.filter(a => a.safetyConcern).length,
+          urgentItems: audits.filter(a => a.priority === 'urgent').length
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+
+  app.get('/api/analytics/energy', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const energyPolls = await storage.getAllEnergyPolls();
+
+      // Class performance analytics
+      const classStats = energyPolls.reduce((acc: any, poll) => {
+        if (!acc[poll.className]) {
+          acc[poll.className] = {
+            totalPolls: 0,
+            totalEnergyLevel: 0,
+            averageEnergyLevel: 0
+          };
+        }
+        acc[poll.className].totalPolls++;
+        acc[poll.className].totalEnergyLevel += poll.energyLevel;
+        acc[poll.className].averageEnergyLevel = acc[poll.className].totalEnergyLevel / acc[poll.className].totalPolls;
+        return acc;
+      }, {});
+
+      // Energy level distribution
+      const energyDistribution = energyPolls.reduce((acc: any, poll) => {
+        const level = poll.energyLevel;
+        acc[level] = (acc[level] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Physical activity correlation
+      const activityStats = energyPolls.reduce((acc: any, poll) => {
+        const activity = poll.physicalActivity || 'none';
+        if (!acc[activity]) {
+          acc[activity] = {
+            count: 0,
+            totalEnergyLevel: 0,
+            averageEnergyLevel: 0
+          };
+        }
+        acc[activity].count++;
+        acc[activity].totalEnergyLevel += poll.energyLevel;
+        acc[activity].averageEnergyLevel = acc[activity].totalEnergyLevel / acc[activity].count;
+        return acc;
+      }, {});
+
+      res.json({
+        classStats,
+        energyDistribution,
+        activityStats,
+        summary: {
+          totalResponses: energyPolls.length,
+          averageEnergyLevel: energyPolls.length > 0 
+            ? energyPolls.reduce((sum, poll) => sum + poll.energyLevel, 0) / energyPolls.length 
+            : 0,
+          uniqueClasses: Object.keys(classStats).length
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching energy analytics:", error);
+      res.status(500).json({ message: "Failed to fetch energy analytics data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

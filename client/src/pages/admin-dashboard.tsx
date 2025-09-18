@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,8 @@ import {
   Download,
   Zap,
   Lightbulb,
-  Monitor
+  Monitor,
+  BarChart3
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { AuditTable } from "@/components/audit-table";
@@ -36,6 +38,7 @@ export default function AdminDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -56,43 +59,19 @@ export default function AdminDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch all audits with filters
-  const { data: audits = [], isLoading: auditsLoading } = useQuery({
+  const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
     queryKey: ["/api/audits", { status: statusFilter, priority: priorityFilter, search: searchTerm }],
     enabled: isAuthenticated && user?.role === 'admin',
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Fetch admin stats
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<AuditStats>({
     queryKey: ["/api/stats"],
     enabled: isAuthenticated && user?.role === 'admin',
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Fetch energy polls
-  const { data: energyPolls = [] } = useQuery({
+  const { data: energyPolls = [] } = useQuery<any[]>({
     queryKey: ["/api/energy-polls"],
     enabled: isAuthenticated && user?.role === 'admin',
   });
@@ -339,6 +318,16 @@ export default function AdminDashboard() {
                 <Badge className="bg-purple-100 text-purple-700">Admin</Badge>
               </div>
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation("/analytics")}
+                  className="text-green-600 border-green-600 hover:bg-green-50 text-sm"
+                  data-testid="analytics-button"
+                >
+                  <BarChart3 className="h-4 w-4 mr-1" />
+                  Analytics
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
