@@ -413,7 +413,8 @@ export default function AdminDashboard() {
               <Button
                 variant="outline"
                 className="p-4 h-auto flex-col space-y-2 hover:border-primary hover:bg-blue-50"
-                onClick={() => toast({ title: "Feature Coming Soon", description: "Analytics feature will be available soon" })}
+                onClick={() => setLocation("/analytics")}
+                data-testid="view-analytics-button"
               >
                 <TrendingUp className="text-primary text-xl" />
                 <div className="text-center">
