@@ -5,6 +5,8 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupMicrosoftAuth, isMicrosoftAuthenticated } from "./microsoftAuth";
 import { insertAuditSchema, insertEnergyPollSchema } from "@shared/schema";
 import { z } from "zod";
+import OpenAI from "openai";
+import { batchProcess } from "./replit_integrations/batch";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -657,6 +659,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching energy analytics:", error);
       res.status(500).json({ message: "Failed to fetch energy analytics data" });
+    }
+  });
+
+  // AI Analysis endpoint - provides insights about audit issues
+  app.get('/api/analytics/ai-insights', authenticateUser, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const audits = await storage.getAllAudits();
+      
+      if (audits.length === 0) {
+        return res.json({
+          summary: "No audit data available yet. Create some audits to get AI-powered insights.",
+          topIssues: [],
+          priorityAreas: [],
+          recommendations: []
+        });
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      });
+
+      // Prepare audit data summary for AI analysis
+      const auditSummary = {
+        totalAudits: audits.length,
+        byAssetType: audits.reduce((acc: any, a) => {
+          acc[a.assetType] = (acc[a.assetType] || 0) + 1;
+          return acc;
+        }, {}),
+        byCondition: audits.reduce((acc: any, a) => {
+          acc[a.condition] = (acc[a.condition] || 0) + 1;
+          return acc;
+        }, {}),
+        byPriority: audits.reduce((acc: any, a) => {
+          acc[a.priority] = (acc[a.priority] || 0) + 1;
+          return acc;
+        }, {}),
+        safetyIssues: audits.filter(a => a.safetyConcern).length,
+        urgentItems: audits.filter(a => a.priority === 'urgent').length,
+        topProblematicItems: audits
+          .filter(a => a.condition === 'poor' || a.priority === 'urgent')
+          .map(a => ({ name: a.itemName, type: a.assetType, condition: a.condition, priority: a.priority }))
+          .slice(0, 10)
+      };
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-5.1",
+        messages: [{
+          role: "user",
+          content: `Analyze this school audit data and provide a concise summary of the main issues, problem areas, and recommendations:\n\n${JSON.stringify(auditSummary, null, 2)}\n\nProvide response in JSON format with fields: "summary" (2-3 sentence overview), "topIssues" (array of 3-5 main problems), "priorityAreas" (array of 3 areas needing immediate attention), "recommendations" (array of 3-4 actionable suggestions).`
+        }],
+        max_completion_tokens: 1000,
+        response_format: { type: "json_object" }
+      });
+
+      const aiAnalysis = JSON.parse(response.choices[0]?.message?.content || '{}');
+      res.json(aiAnalysis);
+    } catch (error) {
+      console.error("Error generating AI insights:", error);
+      res.status(500).json({ message: "Failed to generate AI insights" });
     }
   });
 

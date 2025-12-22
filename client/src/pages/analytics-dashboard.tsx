@@ -74,6 +74,13 @@ interface EnergyAnalyticsData {
   };
 }
 
+interface AIInsights {
+  summary: string;
+  topIssues: string[];
+  priorityAreas: string[];
+  recommendations: string[];
+}
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function AnalyticsDashboard() {
@@ -107,7 +114,13 @@ export default function AnalyticsDashboard() {
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
-  if (isLoading || analyticsLoading || energyLoading) {
+  // Fetch AI insights
+  const { data: aiInsights, isLoading: aiLoading } = useQuery<AIInsights>({
+    queryKey: ["/api/analytics/ai-insights"],
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  if (isLoading || analyticsLoading || energyLoading || aiLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -383,6 +396,61 @@ export default function AnalyticsDashboard() {
 
           <TabsContent value="trends" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
+              {/* AI Insights Section */}
+              {aiInsights && (
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-indigo-600" />
+                      AI-Powered Insights
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-gray-700 text-sm leading-relaxed">{aiInsights.summary}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2 text-sm">Top Issues</h3>
+                        <ul className="space-y-1">
+                          {aiInsights.topIssues?.map((issue, idx) => (
+                            <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                              <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                              <span>{issue}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2 text-sm">Priority Areas</h3>
+                        <ul className="space-y-1">
+                          {aiInsights.priorityAreas?.map((area, idx) => (
+                            <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                              <Clock className="h-4 w-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                              <span>{area}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm">Recommendations</h3>
+                      <ul className="space-y-1">
+                        {aiInsights.recommendations?.map((rec, idx) => (
+                          <li key={idx} className="text-sm text-gray-600 flex gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Audit Trends */}
               <Card>
                 <CardHeader>
