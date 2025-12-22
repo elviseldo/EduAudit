@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   role: varchar("role").notNull().default("student"), // student or admin
   studentId: varchar("student_id"),
   className: varchar("class_name"), // e.g., "Grade 7C"
+  school: varchar("school").notNull().default("millennium"), // millennium or experimental
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -42,6 +43,7 @@ export const users = pgTable("users", {
 export const audits = pgTable("audits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
+  school: varchar("school").notNull().default("millennium"), // school identifier
   assetType: varchar("asset_type").notNull(), // furniture, electronics, storage, infrastructure
   itemName: varchar("item_name").notNull(),
   assetId: varchar("asset_id"),
@@ -159,6 +161,7 @@ export const maintenanceLogs = pgTable("maintenance_logs", {
 export const energyPolls = pgTable("energy_polls", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
+  school: varchar("school").notNull().default("millennium"), // school identifier
   className: varchar("class_name").notNull(),
   energyLevel: integer("energy_level").notNull(), // 1-10 scale
   mood: varchar("mood").notNull(), // happy, tired, focused, stressed, etc.
