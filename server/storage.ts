@@ -125,15 +125,23 @@ export class DatabaseStorage implements IStorage {
     return audit;
   }
 
-  async getAuditsByUser(userId: string): Promise<Audit[]> {
+  async getAuditsByUser(userId: string, school?: string): Promise<Audit[]> {
+    const conditions = [eq(audits.userId, userId)];
+    if (school) {
+      conditions.push(eq(audits.school, school));
+    }
     return await db.select()
       .from(audits)
-      .where(eq(audits.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(audits.createdAt));
   }
 
-  async getAllAudits(filters?: AuditFilters): Promise<Audit[]> {
+  async getAllAudits(filters?: AuditFilters & { school?: string }): Promise<Audit[]> {
     const conditions = [];
+    
+    if (filters?.school) {
+      conditions.push(eq(audits.school, filters.school));
+    }
     
     if (filters?.status && filters.status !== "all") {
       conditions.push(eq(audits.status, filters.status));
@@ -192,8 +200,12 @@ export class DatabaseStorage implements IStorage {
     return audit;
   }
 
-  async getAuditStats(): Promise<AuditStats> {
-    const allAudits = await db.select().from(audits);
+  async getAuditStats(school?: string): Promise<AuditStats> {
+    const query = school 
+      ? await db.select().from(audits).where(eq(audits.school, school))
+      : await db.select().from(audits);
+    
+    const allAudits = query;
     
     return {
       totalAudits: allAudits.length,
