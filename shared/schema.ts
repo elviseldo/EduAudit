@@ -215,6 +215,21 @@ export const auditsEnhancedRelations = relations(audits, ({ one, many }) => ({
   maintenanceLogs: many(maintenanceLogs),
 }));
 
+// Chat system tables for AI conversations
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas for new tables
 export const insertAssetCatalogSchema = createInsertSchema(assetCatalog).omit({
   id: true,
@@ -238,6 +253,16 @@ export const insertEnergyPollSchema = createInsertSchema(energyPolls).omit({
   createdAt: true,
 });
 
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for new tables
 export type AssetCatalog = typeof assetCatalog.$inferSelect;
 export type InsertAssetCatalog = z.infer<typeof insertAssetCatalogSchema>;
@@ -247,3 +272,7 @@ export type MaintenanceLog = typeof maintenanceLogs.$inferSelect;
 export type InsertMaintenanceLog = z.infer<typeof insertMaintenanceLogSchema>;
 export type EnergyPoll = typeof energyPolls.$inferSelect;
 export type InsertEnergyPoll = z.infer<typeof insertEnergyPollSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
