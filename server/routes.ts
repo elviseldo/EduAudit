@@ -79,9 +79,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const school = req.body.school || 'millennium';
       const auditData = {
         ...req.body,
-        userId
+        userId,
+        school
       };
       
       const validatedData = insertAuditSchema.parse(auditData);
@@ -101,6 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const school = req.query.school as string || 'millennium';
       let user;
       
       try {
@@ -119,8 +122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let audits;
       try {
         if (user.role === 'admin') {
-          // Admin can see all audits with filters
+          // Admin can see all audits from their school with filters
           const filters = {
+            school,
             status: req.query.status as string,
             priority: req.query.priority as string,
             condition: req.query.condition as string,
@@ -138,8 +142,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           audits = await storage.getAllAudits(filters);
         } else {
-          // Students can only see their own audits
-          audits = await storage.getAuditsByUser(userId);
+          // Students can only see their own audits from their school
+          audits = await storage.getAuditsByUser(userId, school);
         }
       } catch (dbError) {
         console.error("Database error fetching audits:", dbError);
