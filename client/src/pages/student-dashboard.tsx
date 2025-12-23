@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useSchool } from "@/hooks/useSchool";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,10 +24,12 @@ import {
   Zap
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
+import { SchoolSwitcher } from "@/pages/school-switcher";
 import type { Audit, UserAuditStats, EnergyPoll, User } from "@shared/schema";
 
 export default function StudentDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth() as { user: User | null, isLoading: boolean, isAuthenticated: boolean };
+  const { school } = useSchool();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -48,13 +51,13 @@ export default function StudentDashboard() {
 
   // Fetch user's audits
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
-    queryKey: ["/api/audits"],
+    queryKey: ["/api/audits", school],
     enabled: isAuthenticated,
   });
 
   // Fetch user stats
   const { data: stats } = useQuery<UserAuditStats>({
-    queryKey: ["/api/stats"],
+    queryKey: ["/api/stats", school],
     enabled: isAuthenticated,
   });
 

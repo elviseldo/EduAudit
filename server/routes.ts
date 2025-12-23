@@ -214,6 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/stats', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const school = req.query.school as string || 'millennium';
       let user;
       
       try {
@@ -240,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let stats;
       try {
         if (user.role === 'admin') {
-          stats = await storage.getAuditStats();
+          stats = await storage.getAuditStats(school);
         } else {
           stats = await storage.getUserAuditStats(userId);
         }
