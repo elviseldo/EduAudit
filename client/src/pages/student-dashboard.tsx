@@ -91,6 +91,7 @@ export default function StudentDashboard() {
   });
 
   const handleLogout = () => {
+    localStorage.removeItem("selectedSchool");
     window.location.href = "/api/logout";
   };
 
