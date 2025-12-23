@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useSchool } from "@/hooks/useSchool";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -27,6 +28,7 @@ type AuditFormData = z.infer<typeof auditFormSchema>;
 
 export default function AuditForm() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const { school } = useSchool();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -78,13 +80,14 @@ export default function AuditForm() {
       // TODO: Handle photo uploads to a file storage service
       const auditData = {
         ...data,
+        school,
         photos: photos.map(p => p.name), // Placeholder - in production, upload files first
       };
       await apiRequest("POST", "/api/audits", auditData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/audits"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/audits", school] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats", school] });
       toast({
         title: "Success",
         description: "Audit report submitted successfully",

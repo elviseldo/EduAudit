@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useSchool } from "@/hooks/useSchool";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,10 +32,12 @@ import {
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { AuditTable } from "@/components/audit-table";
+import { SchoolSwitcher } from "@/pages/school-switcher";
 import type { Audit, AuditStats } from "@shared/schema";
 
 export default function AdminDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const { school } = useSchool();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -59,13 +62,13 @@ export default function AdminDashboard() {
 
   // Fetch all audits with filters
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
-    queryKey: ["/api/audits", { status: statusFilter, priority: priorityFilter, search: searchTerm }],
+    queryKey: ["/api/audits", school, { status: statusFilter, priority: priorityFilter, search: searchTerm }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Fetch admin stats
   const { data: stats } = useQuery<AuditStats>({
-    queryKey: ["/api/stats"],
+    queryKey: ["/api/stats", school],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -84,8 +87,8 @@ export default function AdminDashboard() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/audits"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/audits", school] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats", school] });
       toast({
         title: "Success",
         description: "Audit status updated successfully",

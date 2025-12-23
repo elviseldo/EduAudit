@@ -26,6 +26,7 @@ import {
   Zap 
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSchool } from "@/hooks/useSchool";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { type User } from "@shared/schema";
@@ -85,6 +86,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function AnalyticsDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const { school } = useSchool();
   const { toast } = useToast();
 
   // Redirect to login if not authenticated or not admin
@@ -104,19 +106,19 @@ export default function AnalyticsDashboard() {
 
   // Fetch analytics overview data
   const { data: analyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
-    queryKey: ["/api/analytics/overview"],
+    queryKey: ["/api/analytics/overview", school],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Fetch energy analytics data
   const { data: energyAnalytics, isLoading: energyLoading } = useQuery<EnergyAnalyticsData>({
-    queryKey: ["/api/analytics/energy"],
+    queryKey: ["/api/analytics/energy", school],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Fetch AI insights
   const { data: aiInsights, isLoading: aiLoading } = useQuery<AIInsights>({
-    queryKey: ["/api/analytics/ai-insights"],
+    queryKey: ["/api/analytics/ai-insights", school],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
