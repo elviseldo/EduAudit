@@ -144,6 +144,7 @@ export default function AdminDashboard() {
   });
 
   const handleLogout = () => {
+    localStorage.removeItem("selectedSchool");
     window.location.href = "/api/logout";
   };
 
