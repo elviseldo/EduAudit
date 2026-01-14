@@ -14,9 +14,9 @@ const SCHOOLS = [
     code: "4ZD4D"
   },
   {
-    id: "experimental",
-    name: "Experimental School",
-    description: "Forward-thinking school with experimental teaching methods",
+    id: "auditing",
+    name: "Auditing",
+    description: "Access point for general school audit reporting and monitoring",
     color: "from-purple-500 to-purple-600",
     code: "1234"
   }
