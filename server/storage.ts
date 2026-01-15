@@ -407,6 +407,7 @@ export class MemStorage implements IStorage {
       firstName: userData.firstName || null,
       lastName: userData.lastName || null,
       profileImageUrl: userData.profileImageUrl || null,
+      role: userData.role || "student",
       studentId: userData.studentId || null,
       className: userData.className || null,
       createdAt: existingUser?.createdAt || now,
