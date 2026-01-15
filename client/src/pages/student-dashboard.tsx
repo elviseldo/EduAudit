@@ -229,174 +229,260 @@ export default function StudentDashboard() {
           </p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatsCard
-            title="Total Audits"
-            value={stats?.totalAudits || 0}
-            icon={<ClipboardCheck className="text-primary" />}
-            color="blue"
-          />
-          <StatsCard
-            title="Reviewed"
-            value={stats?.reviewedAudits || 0}
-            icon={<CheckCircle className="text-success" />}
-            color="green"
-          />
-          <StatsCard
-            title="Pending"
-            value={stats?.pendingAudits || 0}
-            icon={<Clock className="text-warning" />}
-            color="yellow"
-          />
-        </div>
-
-        {/* Daily Energy Poll */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2" />
-              Daily Electricity Report
-            </CardTitle>
-            <p className="text-gray-600">
-              Help us track and reduce electrical energy usage at school.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium text-blue-900">Classroom Energy Reports</p>
-                  <p className="text-sm text-blue-700">
-                    Report when lights and smart boards are turned off in any classroom.
-                  </p>
-                </div>
+        {/* Auditing School - Simplified View */}
+        {school === 'auditing' ? (
+          <div className="space-y-8">
+            <div className="flex flex-col items-center justify-center py-12 px-4 bg-white rounded-xl shadow-sm border border-gray-200 text-center">
+              <div className="h-20 w-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                <ClipboardCheck className="h-10 w-10 text-purple-600" />
               </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to Audit?</h2>
+              <p className="text-gray-600 mb-8 max-w-md">
+                Select your class and start a new audit report. Remember, each class can only be audited once every 10 days.
+              </p>
               <Button
-                onClick={() => setLocation('/energy-poll')}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                New Report
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Create New Audit Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Create New Audit</CardTitle>
-            <p className="text-gray-600">
-              Report the condition of school furniture, equipment, and facilities.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                size="lg"
                 onClick={() => handleCreateAudit('furniture')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 h-auto text-lg rounded-xl shadow-md transition-all hover:scale-105"
               >
-                <Armchair className="text-2xl text-gray-400 group-hover:text-primary" />
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">Furniture</p>
-                  <p className="text-sm text-gray-500">Desks, chairs, tables</p>
-                </div>
+                <Zap className="h-5 w-5 mr-3" />
+                Start a New Audit
               </Button>
-
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
-                onClick={() => handleCreateAudit('electronics')}
-              >
-                <Monitor className="text-2xl text-gray-400 group-hover:text-primary" />
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">Electronics</p>
-                  <p className="text-sm text-gray-500">Screens, projectors</p>
+              {selectedClass && (
+                <div className="mt-4 p-2 px-4 bg-purple-50 text-purple-700 rounded-full text-sm font-medium border border-purple-100 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Selected Class: {selectedClass}
+                  <button 
+                    onClick={() => setSelectedClass(null)}
+                    className="ml-2 hover:text-purple-900 underline"
+                  >
+                    Change
+                  </button>
                 </div>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
-                onClick={() => handleCreateAudit('storage')}
-              >
-                <Archive className="text-2xl text-gray-400 group-hover:text-primary" />
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">Storage</p>
-                  <p className="text-sm text-gray-500">Lockers, cabinets</p>
-                </div>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
-                onClick={() => handleCreateAudit('infrastructure')}
-              >
-                <DoorOpen className="text-2xl text-gray-400 group-hover:text-primary" />
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">Infrastructure</p>
-                  <p className="text-sm text-gray-500">Doors, windows, walls</p>
-                </div>
-              </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Recent Audits */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Recent Audits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {auditsLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              </div>
-            ) : audits.length === 0 ? (
-              <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No audits submitted yet</p>
-                <p className="text-sm text-gray-400">Create your first audit report above</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {audits.map((audit: Audit) => (
-                  <div key={audit.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          {getAssetIcon(audit.assetType)}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            {audit.itemName} - {audit.grade}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {audit.building}, {audit.floor}, {audit.grade}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Submitted {new Date(audit.createdAt!).toLocaleDateString()}
-                          </p>
+            {/* Recent Audits for Auditing School */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Audit Reports</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {auditsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : audits.length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No audits submitted yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {audits.map((audit: Audit) => (
+                      <div key={audit.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                              <ClipboardCheck className="text-purple-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">
+                                {audit.itemName} - {audit.grade}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                Quantity: {audit.quantity}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                Submitted {new Date(audit.createdAt!).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <Badge className={getStatusColor(audit.status)}>
+                              {formatStatus(audit.status)}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Badge className={getStatusColor(audit.status)}>
-                          {formatStatus(audit.status)}
-                        </Badge>
-                        <Badge className={getConditionColor(audit.condition)}>
-                          {audit.condition}
-                        </Badge>
-                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <>
+            {/* Quick Stats (Millennium Only) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <StatsCard
+                title="Total Audits"
+                value={stats?.totalAudits || 0}
+                icon={<ClipboardCheck className="text-primary" />}
+                color="blue"
+              />
+              <StatsCard
+                title="Reviewed"
+                value={stats?.reviewedAudits || 0}
+                icon={<CheckCircle className="text-success" />}
+                color="green"
+              />
+              <StatsCard
+                title="Pending"
+                value={stats?.pendingAudits || 0}
+                icon={<Clock className="text-warning" />}
+                color="yellow"
+              />
+            </div>
+
+            {/* Daily Energy Poll (Millennium Only) */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Lightbulb className="h-5 w-5 mr-2" />
+                  Daily Electricity Report
+                </CardTitle>
+                <p className="text-gray-600">
+                  Help us track and reduce electrical energy usage at school.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <p className="font-medium text-blue-900">Classroom Energy Reports</p>
+                      <p className="text-sm text-blue-700">
+                        Report when lights and smart boards are turned off in any classroom.
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <Button
+                    onClick={() => setLocation('/energy-poll')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    New Report
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Create New Audit Section (Millennium Only) */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Create New Audit</CardTitle>
+                <p className="text-gray-600">
+                  Report the condition of school furniture, equipment, and facilities.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button
+                    variant="outline"
+                    className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                    onClick={() => handleCreateAudit('furniture')}
+                  >
+                    <Armchair className="text-2xl text-gray-400 group-hover:text-primary" />
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900">Furniture</p>
+                      <p className="text-sm text-gray-500">Desks, chairs, tables</p>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                    onClick={() => handleCreateAudit('electronics')}
+                  >
+                    <Monitor className="text-2xl text-gray-400 group-hover:text-primary" />
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900">Electronics</p>
+                      <p className="text-sm text-gray-500">Screens, projectors</p>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                    onClick={() => handleCreateAudit('storage')}
+                  >
+                    <Archive className="text-2xl text-gray-400 group-hover:text-primary" />
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900">Storage</p>
+                      <p className="text-sm text-gray-500">Lockers, cabinets</p>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="p-6 h-auto flex-col space-y-3 border-dashed border-2 hover:border-primary hover:bg-blue-50"
+                    onClick={() => handleCreateAudit('infrastructure')}
+                  >
+                    <DoorOpen className="text-2xl text-gray-400 group-hover:text-primary" />
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900">Infrastructure</p>
+                      <p className="text-sm text-gray-500">Doors, windows, walls</p>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Audits (Millennium Only) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Recent Audits</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {auditsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : audits.length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No audits submitted yet</p>
+                    <p className="text-sm text-gray-400">Create your first audit report above</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {audits.map((audit: Audit) => (
+                      <div key={audit.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              {getAssetIcon(audit.assetType)}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">
+                                {audit.itemName} - {audit.grade}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                {audit.building}, {audit.floor}, {audit.grade}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                Submitted {new Date(audit.createdAt!).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <Badge className={getStatusColor(audit.status)}>
+                              {formatStatus(audit.status)}
+                            </Badge>
+                            <Badge className={getConditionColor(audit.condition)}>
+                              {audit.condition}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
