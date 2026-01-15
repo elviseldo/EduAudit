@@ -21,10 +21,21 @@ import { insertAuditSchema } from "@shared/schema";
 import { z } from "zod";
 
 const auditFormSchema = insertAuditSchema.extend({
+  grade: z.string().min(1, "Grade/Class is required"),
+  quantity: z.number().min(1, "Quantity must be at least 1"),
   safetyConcern: z.boolean().default(false),
 });
 
 type AuditFormData = z.infer<typeof auditFormSchema>;
+
+const AUDITING_ITEMS = [
+  "Student Desks",
+  "Smart Board",
+  "White Board",
+  "Lockers",
+  "Student Chairs",
+  "Doors"
+];
 
 export default function AuditForm() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -34,9 +45,10 @@ export default function AuditForm() {
   const [, setLocation] = useLocation();
   const [photos, setPhotos] = useState<File[]>([]);
 
-  // Get asset type from URL params
+  // Get asset type and pre-selected class from URL params
   const urlParams = new URLSearchParams(window.location.search);
   const assetType = urlParams.get('type') || '';
+  const preSelectedClass = urlParams.get('class') || '';
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -61,9 +73,10 @@ export default function AuditForm() {
       itemName: '',
       assetId: '',
       brandModel: '',
-      building: '',
-      floor: '',
-      grade: '',
+      building: school === 'auditing' ? 'Auditing Area' : '',
+      floor: school === 'auditing' ? 'N/A' : '',
+      grade: preSelectedClass || '',
+      quantity: 1,
       locationNotes: '',
       condition: '',
       description: '',
@@ -231,13 +244,49 @@ export default function AuditForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specific Item</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Student Desk, Smart Board, Locker" {...field} />
-                        </FormControl>
+                        {school === 'auditing' ? (
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select item" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {AUDITING_ITEMS.map(item => (
+                                <SelectItem key={item} value={item}>{item}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <FormControl>
+                            <Input placeholder="e.g., Student Desk, Smart Board, Locker" {...field} />
+                          </FormControl>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  {school === 'auditing' && (
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min={1} 
+                              {...field} 
+                              onChange={e => field.onChange(parseInt(e.target.value) || 1)} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   <FormField
                     control={form.control}

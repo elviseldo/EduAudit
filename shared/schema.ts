@@ -52,6 +52,7 @@ export const audits = pgTable("audits", {
   floor: varchar("floor").notNull(),
   grade: varchar("grade").notNull(),
   locationNotes: text("location_notes"),
+  quantity: integer("quantity").default(1),
   condition: varchar("condition").notNull(), // excellent, good, fair, poor
   description: text("description").notNull(),
   priority: varchar("priority").notNull(), // low, medium, high, urgent
