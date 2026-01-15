@@ -15,35 +15,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Test authentication middleware - automatically logs in as admin
   const authenticateUser: RequestHandler = async (req, res, next) => {
-    // Create test admin user for development
-    const testUserId = "test-admin-456";
+    // Create test user for development
+    const testUserId = "test-user-123";
     
     try {
-      // Ensure test admin user exists in database
+      // Ensure test user exists in database
       let testUser = await storage.getUser(testUserId);
       if (!testUser) {
         testUser = await storage.upsertUser({
           id: testUserId,
-          email: "admin@test.edu",
+          email: "student@test.edu",
           firstName: "Test",
-          lastName: "Admin",
+          lastName: "Student",
           profileImageUrl: null,
-          role: "admin",
-          studentId: null
+          role: "student", // LAND AS STUDENT
+          studentId: "S12345"
         });
       }
     } catch (error) {
       console.error("Database connection error during authentication:", error);
-      // Continue with mock user data even if database fails
     }
 
-    // Set test admin user session
+    // Set test user session
     req.user = {
       claims: {
         sub: testUserId,
-        email: "admin@test.edu",
+        email: "student@test.edu",
         first_name: "Test",
-        last_name: "Admin"
+        last_name: "Student"
       },
       access_token: "test-token",
       expires_at: Math.floor(Date.now() / 1000) + 3600
@@ -62,13 +61,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching user:", error);
       // Return mock user data if database is not accessible
       res.json({
-        id: "test-admin-456",
-        email: "admin@test.edu",
+        id: "test-user-123",
+        email: "student@test.edu",
         firstName: "Test",
-        lastName: "Admin",
+        lastName: "Student",
         profileImageUrl: null,
-        role: "admin",
-        studentId: null,
+        role: "student",
+        studentId: "S12345",
         createdAt: new Date(),
         updatedAt: new Date()
       });
