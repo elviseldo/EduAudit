@@ -33,6 +33,7 @@ export default function StudentDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -48,6 +49,19 @@ export default function StudentDashboard() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
+
+  const handleSetClass = () => {
+    const className = prompt("Please enter your Class (e.g., Grade 7C):");
+    if (className && className.trim()) {
+      setSelectedClass(className.trim());
+    } else {
+      toast({
+        title: "Class Required",
+        description: "You must enter a class to proceed with auditing.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Fetch user's audits
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
@@ -102,7 +116,12 @@ export default function StudentDashboard() {
   };
 
   const handleCreateAudit = (assetType: string) => {
-    setLocation(`/audit/new?type=${assetType}`);
+    if (school === 'auditing' && !selectedClass) {
+      handleSetClass();
+      return;
+    }
+    const classParam = selectedClass ? `&class=${encodeURIComponent(selectedClass)}` : '';
+    setLocation(`/audit/new?type=${assetType}${classParam}`);
   };
 
   const getAssetIcon = (assetType: string) => {
