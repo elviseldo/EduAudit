@@ -110,9 +110,18 @@ export default function StudentDashboard() {
   };
 
   const handleSwitchToAdmin = () => {
-    switchRoleMutation.mutate({
-      role: "admin",
-    });
+    const adminCode = prompt("Enter Admin Access Code:");
+    if (adminCode === "1818") {
+      switchRoleMutation.mutate({
+        role: "admin",
+      });
+    } else if (adminCode !== null) {
+      toast({
+        title: "Access Denied",
+        description: "Invalid admin access code.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCreateAudit = (assetType: string) => {
