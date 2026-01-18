@@ -420,19 +420,19 @@ export class MemStorage implements IStorage {
 
   // Audit operations
   async createAudit(auditData: InsertAudit): Promise<Audit> {
-    // Enforcement for 'auditing' school: one entry per class every 10 days
+    // Enforcement for 'auditing' school: one entry per class every 7 days
     if (auditData.school === 'auditing') {
-      const tenDaysAgo = new Date();
-      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const existingAudits = Array.from(this.audits.values()).filter(a => 
         a.school === 'auditing' && 
         a.grade === auditData.grade && 
-        a.createdAt && a.createdAt >= tenDaysAgo
+        a.createdAt && a.createdAt >= sevenDaysAgo
       );
 
       if (existingAudits.length > 0) {
-        throw new Error(`This class (${auditData.grade}) has already been audited in the last 10 days.`);
+        throw new Error(`This class (${auditData.grade}) has already been audited in the last 7 days.`);
       }
     }
 
