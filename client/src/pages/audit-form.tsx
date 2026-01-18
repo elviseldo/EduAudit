@@ -279,7 +279,15 @@ export default function AuditForm() {
                               type="number" 
                               min={1} 
                               {...field} 
-                              onChange={e => field.onChange(parseInt(e.target.value) || 1)} 
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (val === "") {
+                                  field.onChange(""); // Allow empty string for deletion
+                                } else {
+                                  const parsed = parseInt(val);
+                                  field.onChange(isNaN(parsed) ? "" : parsed);
+                                }
+                              }} 
                             />
                           </FormControl>
                           <FormMessage />
