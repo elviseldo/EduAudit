@@ -743,5 +743,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use in-memory storage to avoid database connection issues
+// Use in-memory storage for persistence
 export const storage = new MemStorage();
