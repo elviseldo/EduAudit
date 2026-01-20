@@ -106,19 +106,19 @@ export default function AnalyticsDashboard() {
 
   // Fetch analytics overview data
   const { data: analyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
-    queryKey: ["/api/analytics/overview", school],
+    queryKey: ["/api/analytics/overview", { school }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Fetch energy analytics data
   const { data: energyAnalytics, isLoading: energyLoading } = useQuery<EnergyAnalyticsData>({
-    queryKey: ["/api/analytics/energy", school],
+    queryKey: ["/api/analytics/energy", { school }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Fetch AI insights
   const { data: aiInsights, isLoading: aiLoading } = useQuery<AIInsights>({
-    queryKey: ["/api/analytics/ai-insights", school],
+    queryKey: ["/api/analytics/ai-insights", { school }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 

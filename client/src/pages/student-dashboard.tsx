@@ -65,13 +65,13 @@ export default function StudentDashboard() {
 
   // Fetch user's audits
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
-    queryKey: ["/api/audits", school],
+    queryKey: ["/api/audits", { school }],
     enabled: isAuthenticated,
   });
 
   // Fetch user stats
   const { data: stats } = useQuery<UserAuditStats>({
-    queryKey: ["/api/stats", school],
+    queryKey: ["/api/stats", { school }],
     enabled: isAuthenticated,
   });
 

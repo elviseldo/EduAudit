@@ -441,6 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      const school = req.query.school as string || 'millennium';
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -448,11 +449,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let polls;
       if (user.role === 'admin') {
-        // Admin can see all polls
-        polls = await storage.getAllEnergyPolls();
+        // Admin can see all polls from their school
+        polls = await storage.getEnergyPolls(school);
       } else {
-        // Students can only see their own polls
-        polls = await storage.getEnergyPollsByUser(userId);
+        // Students can only see their own polls from their school
+        polls = await storage.getEnergyPollsByUser(userId, school);
       }
       
       res.json(polls);
@@ -496,14 +497,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      const school = req.query.school as string || 'millennium';
       
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
       const [audits, energyPolls] = await Promise.all([
-        storage.getAllAudits(),
-        storage.getAllEnergyPolls()
+        storage.getAllAudits({ school }),
+        storage.getEnergyPolls(school)
       ]);
 
       // Audit trends over time (last 30 days)
@@ -603,12 +605,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      const school = req.query.school as string || 'millennium';
       
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      const energyPolls = await storage.getAllEnergyPolls();
+      const energyPolls = await storage.getEnergyPolls(school);
 
       // Class performance analytics
       const classStats = energyPolls.reduce((acc: any, poll) => {
