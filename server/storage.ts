@@ -698,6 +698,8 @@ export class MemStorage implements IStorage {
     const poll: EnergyPoll = {
       ...pollData,
       id: this.energyPollIdCounter++,
+      lightsOff: pollData.lightsOff || false,
+      smartBoardOff: pollData.smartBoardOff || false,
       sleepHours: pollData.sleepHours || null,
       breakfastEaten: pollData.breakfastEaten || null,
       physicalActivity: pollData.physicalActivity || null,

@@ -448,13 +448,13 @@ export default function AdminDashboard() {
                   <div key={poll.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="flex space-x-2">
-                        {poll.sleepHours === 0 && (
+                        {poll.lightsOff && (
                           <div className="flex items-center space-x-1 text-green-600">
                             <Lightbulb className="h-4 w-4" />
                             <span className="text-sm">Lights Off</span>
                           </div>
                         )}
-                        {poll.breakfastEaten && (
+                        {poll.smartBoardOff && (
                           <div className="flex items-center space-x-1 text-blue-600">
                             <Monitor className="h-4 w-4" />
                             <span className="text-sm">Smart Board Off</span>
@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <div className="flex items-center space-x-1">
-                        {poll.sleepHours === 0 ? (
+                        {poll.lightsOff ? (
                           <span className="text-green-600">✓</span>
                         ) : (
                           <span className="text-red-600">✗</span>
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
                         <span className="text-xs text-gray-500">Lights</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        {poll.breakfastEaten ? (
+                        {poll.smartBoardOff ? (
                           <span className="text-green-600">✓</span>
                         ) : (
                           <span className="text-red-600">✗</span>

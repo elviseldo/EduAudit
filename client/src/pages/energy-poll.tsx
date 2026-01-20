@@ -63,6 +63,8 @@ export default function EnergyPoll() {
 
     submitPollMutation.mutate({
       energyLevel: lightsOff ? 5 : 1, // Use lights status for energy level
+      lightsOff,
+      smartBoardOff,
       mood: "comfortable", // Default value
       sleepHours: lightsOff ? 0 : 1, // 0 if lights off, 1 if left on
       breakfastEaten: smartBoardOff, // Use smart board status

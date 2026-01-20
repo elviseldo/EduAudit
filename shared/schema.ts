@@ -164,6 +164,8 @@ export const energyPolls = pgTable("energy_polls", {
   userId: varchar("user_id").notNull(),
   school: varchar("school").notNull().default("millennium"), // school identifier
   className: varchar("class_name").notNull(),
+  lightsOff: boolean("lights_off").default(false),
+  smartBoardOff: boolean("smart_board_off").default(false),
   energyLevel: integer("energy_level").notNull(), // 1-10 scale
   mood: varchar("mood").notNull(), // happy, tired, focused, stressed, etc.
   sleepHours: integer("sleep_hours"), // hours of sleep last night
