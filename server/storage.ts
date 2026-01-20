@@ -218,8 +218,8 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string): Promise<UserAuditStats> {
-    const userAudits = await this.getAuditsByUser(userId);
+  async getUserAuditStats(userId: string, school: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId, school);
     
     return {
       totalAudits: userAudits.length,
@@ -520,22 +520,22 @@ export class MemStorage implements IStorage {
     return updatedAudit;
   }
 
-  async getAuditStats(): Promise<AuditStats> {
-    const allAudits = Array.from(this.audits.values());
+  async getAuditStats(school: string): Promise<AuditStats> {
+    const audits = await this.getAllAudits({ school });
     
     return {
-      totalAudits: allAudits.length,
-      pendingAudits: allAudits.filter(a => a.status === 'pending').length,
-      reviewedAudits: allAudits.filter(a => a.status === 'reviewed').length,
-      inProgressAudits: allAudits.filter(a => a.status === 'in_progress').length,
-      resolvedAudits: allAudits.filter(a => a.status === 'resolved').length,
-      highPriorityAudits: allAudits.filter(a => a.priority === 'high').length,
-      urgentAudits: allAudits.filter(a => a.priority === 'urgent').length,
+      totalAudits: audits.length,
+      pendingAudits: audits.filter(a => a.status === 'pending').length,
+      reviewedAudits: audits.filter(a => a.status === 'reviewed').length,
+      inProgressAudits: audits.filter(a => a.status === 'in_progress').length,
+      resolvedAudits: audits.filter(a => a.status === 'resolved').length,
+      highPriorityAudits: audits.filter(a => a.priority === 'high').length,
+      urgentAudits: audits.filter(a => a.priority === 'urgent').length,
     };
   }
 
-  async getUserAuditStats(userId: string): Promise<UserAuditStats> {
-    const userAudits = await this.getAuditsByUser(userId);
+  async getUserAuditStats(userId: string, school: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId, school);
     
     return {
       totalAudits: userAudits.length,
@@ -711,15 +711,21 @@ export class MemStorage implements IStorage {
     return poll;
   }
 
-  async getEnergyPollsByUser(userId: string): Promise<EnergyPoll[]> {
+  async getEnergyPollsByUser(userId: string, school?: string): Promise<EnergyPoll[]> {
     return Array.from(this.energyPollsList.values())
-      .filter(poll => poll.userId === userId)
+      .filter(poll => poll.userId === userId && (!school || poll.school === school))
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
   async getEnergyPollsByClass(className: string): Promise<EnergyPoll[]> {
     return Array.from(this.energyPollsList.values())
       .filter(poll => poll.className === className)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async getEnergyPolls(school: string): Promise<EnergyPoll[]> {
+    return Array.from(this.energyPollsList.values())
+      .filter(poll => poll.school === school)
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
