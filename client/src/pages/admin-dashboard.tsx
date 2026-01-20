@@ -74,7 +74,7 @@ export default function AdminDashboard() {
 
   // Fetch energy polls
   const { data: energyPolls = [] } = useQuery<any[]>({
-    queryKey: ["/api/energy-polls"],
+    queryKey: ["/api/energy-polls", { school }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
