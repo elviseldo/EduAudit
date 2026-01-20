@@ -34,7 +34,8 @@ const AUDITING_ITEMS = [
   "White Board",
   "Lockers",
   "Student Chairs",
-  "Doors"
+  "Doors",
+  "Lights"
 ];
 
 export default function AuditForm() {
