@@ -456,6 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         polls = await storage.getEnergyPollsByUser(userId, school);
       }
       
+      console.log(`[express] GET /api/energy-polls - school: ${school}, count: ${polls.length}`);
       res.json(polls);
     } catch (error) {
       console.error("Error fetching energy polls:", error);
