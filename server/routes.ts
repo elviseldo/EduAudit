@@ -650,6 +650,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const estimatedCostSaved = totalLightsOff * kWhPerClassPerEvent * COST_PER_KWH;
       const estimatedCostWasted = totalLightsOn * kWhPerClassPerEvent * COST_PER_KWH;
 
+      // Energy level distribution
+      const energyDistribution = energyPollsFiltered.reduce((acc: any, poll) => {
+        const level = poll.energyLevel;
+        acc[level] = (acc[level] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Physical activity correlation
+      const activityStats = energyPollsFiltered.reduce((acc: any, poll) => {
+        const activity = poll.physicalActivity || 'none';
+        if (!acc[activity]) {
+          acc[activity] = {
+            count: 0,
+            totalEnergyLevel: 0,
+            averageEnergyLevel: 0
+          };
+        }
+        acc[activity].count++;
+        acc[activity].totalEnergyLevel += poll.energyLevel;
+        acc[activity].averageEnergyLevel = acc[activity].totalEnergyLevel / acc[activity].count;
+        return acc;
+      }, {});
+
       res.json({
         classStats,
         energyDistribution,

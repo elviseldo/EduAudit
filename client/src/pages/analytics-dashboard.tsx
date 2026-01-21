@@ -23,7 +23,9 @@ import {
   AlertTriangle, 
   Clock, 
   FileText, 
-  Zap 
+  Zap,
+  Lightbulb,
+  CheckCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSchool } from "@/hooks/useSchool";
@@ -151,8 +153,8 @@ export default function AnalyticsDashboard() {
   const formatClassData = (stats: Record<string, { averageEnergyLevel: number; totalPolls: number }>) => {
     return Object.entries(stats).map(([className, data]) => ({
       className,
-      averageEnergyLevel: Math.round(data.averageEnergyLevel * 10) / 10,
-      totalPolls: data.totalPolls,
+      averageEnergyLevel: Math.round((data.averageEnergyLevel || 0) * 10) / 10,
+      totalPolls: data.totalPolls || 0,
     }));
   };
 
