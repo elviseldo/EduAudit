@@ -61,6 +61,8 @@ interface EnergyAnalyticsData {
     totalPolls: number;
     totalEnergyLevel: number;
     averageEnergyLevel: number;
+    lightsOffCount: number;
+    lightsOnCount: number;
   }>;
   energyDistribution: Record<string, number>;
   activityStats: Record<string, {
@@ -72,6 +74,8 @@ interface EnergyAnalyticsData {
     totalResponses: number;
     averageEnergyLevel: number;
     uniqueClasses: number;
+    estimatedCostSaved: number;
+    estimatedCostWasted: number;
   };
 }
 
@@ -165,7 +169,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -213,7 +217,9 @@ export default function AnalyticsDashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -222,6 +228,32 @@ export default function AnalyticsDashboard() {
                   <p className="text-2xl font-bold" data-testid="energy-polls">{analyticsData?.summary.totalEnergyPolls || 0}</p>
                 </div>
                 <Zap className="h-8 w-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-700 font-medium">Electricity Saved</p>
+                  <p className="text-2xl font-bold text-green-600">${energyAnalytics?.summary.estimatedCostSaved || 0}</p>
+                  <p className="text-xs text-green-600">Based on lights off reports</p>
+                </div>
+                <Lightbulb className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-red-700 font-medium">Electricity Wasted</p>
+                  <p className="text-2xl font-bold text-red-600">${energyAnalytics?.summary.estimatedCostWasted || 0}</p>
+                  <p className="text-xs text-red-600">Potential loss (12 lights/class)</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-red-500" />
               </div>
             </CardContent>
           </Card>
