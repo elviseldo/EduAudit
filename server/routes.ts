@@ -614,53 +614,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const energyPolls = await storage.getEnergyPolls(school);
 
       // Class performance analytics
-      const classStats = energyPolls.reduce((acc: any, poll) => {
+      const LIGHTS_PER_CLASS = 12;
+      const WATTS_PER_LIGHT = 40; // 40W fluorescent tube
+      const COST_PER_KWH = 0.15; // Estimated cost per kWh
+      const HOURS_ON_IF_LEFT = 12; // Estimated hours left on if not turned off
+
+      const energyPollsFiltered = energyPolls;
+      
+      const classStats = energyPollsFiltered.reduce((acc: any, poll) => {
         if (!acc[poll.className]) {
           acc[poll.className] = {
             totalPolls: 0,
             totalEnergyLevel: 0,
-            averageEnergyLevel: 0
+            averageEnergyLevel: 0,
+            lightsOffCount: 0,
+            lightsOnCount: 0
           };
         }
         acc[poll.className].totalPolls++;
         acc[poll.className].totalEnergyLevel += poll.energyLevel;
+        if (poll.lightsOff) {
+          acc[poll.className].lightsOffCount++;
+        } else {
+          acc[poll.className].lightsOnCount++;
+        }
         acc[poll.className].averageEnergyLevel = acc[poll.className].totalEnergyLevel / acc[poll.className].totalPolls;
         return acc;
       }, {});
 
-      // Energy level distribution
-      const energyDistribution = energyPolls.reduce((acc: any, poll) => {
-        const level = poll.energyLevel;
-        acc[level] = (acc[level] || 0) + 1;
-        return acc;
-      }, {});
-
-      // Physical activity correlation
-      const activityStats = energyPolls.reduce((acc: any, poll) => {
-        const activity = poll.physicalActivity || 'none';
-        if (!acc[activity]) {
-          acc[activity] = {
-            count: 0,
-            totalEnergyLevel: 0,
-            averageEnergyLevel: 0
-          };
-        }
-        acc[activity].count++;
-        acc[activity].totalEnergyLevel += poll.energyLevel;
-        acc[activity].averageEnergyLevel = acc[activity].totalEnergyLevel / acc[activity].count;
-        return acc;
-      }, {});
+      const totalLightsOff = energyPollsFiltered.filter(p => p.lightsOff).length;
+      const totalLightsOn = energyPollsFiltered.filter(p => !p.lightsOff).length;
+      
+      // Cost calculation: (lights * watts * hours / 1000) * cost_per_kwh
+      const kWhPerClassPerEvent = (LIGHTS_PER_CLASS * WATTS_PER_LIGHT * HOURS_ON_IF_LEFT) / 1000;
+      const estimatedCostSaved = totalLightsOff * kWhPerClassPerEvent * COST_PER_KWH;
+      const estimatedCostWasted = totalLightsOn * kWhPerClassPerEvent * COST_PER_KWH;
 
       res.json({
         classStats,
         energyDistribution,
         activityStats,
         summary: {
-          totalResponses: energyPolls.length,
-          averageEnergyLevel: energyPolls.length > 0 
-            ? energyPolls.reduce((sum, poll) => sum + poll.energyLevel, 0) / energyPolls.length 
+          totalResponses: energyPollsFiltered.length,
+          averageEnergyLevel: energyPollsFiltered.length > 0 
+            ? energyPollsFiltered.reduce((sum, poll) => sum + poll.energyLevel, 0) / energyPollsFiltered.length 
             : 0,
-          uniqueClasses: Object.keys(classStats).length
+          uniqueClasses: Object.keys(classStats).length,
+          estimatedCostSaved: Math.round(estimatedCostSaved * 100) / 100,
+          estimatedCostWasted: Math.round(estimatedCostWasted * 100) / 100
         }
       });
     } catch (error) {
