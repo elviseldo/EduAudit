@@ -55,6 +55,7 @@ export const audits = pgTable("audits", {
   quantity: integer("quantity").default(1),
   condition: varchar("condition").notNull(), // excellent, good, fair, poor
   description: text("description").notNull(),
+  otherItemSpecification: text("other_item_specification"),
   priority: varchar("priority").notNull(), // low, medium, high, urgent
   safetyConcern: boolean("safety_concern").default(false),
   status: varchar("status").notNull().default("pending"), // pending, reviewed, in_progress, resolved
