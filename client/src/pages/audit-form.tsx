@@ -366,11 +366,11 @@ export default function AuditForm() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="main">Main Building</SelectItem>
-                            <SelectItem value="science">Science Building</SelectItem>
-                            <SelectItem value="arts">Arts Building</SelectItem>
-                            <SelectItem value="gym">Gymnasium</SelectItem>
-                            <SelectItem value="library">Library</SelectItem>
+                            <SelectItem value="kindergarten">Kindergartn</SelectItem>
+                            <SelectItem value="primary">Primary</SelectItem>
+                            <SelectItem value="middle">Middle School</SelectItem>
+                            <SelectItem value="high">High School</SelectItem>
+                            <SelectItem value="science">Science</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
