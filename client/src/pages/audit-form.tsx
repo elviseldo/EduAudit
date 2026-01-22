@@ -62,21 +62,6 @@ export default function AuditForm() {
   const assetType = urlParams.get('type') || '';
   const preSelectedClass = urlParams.get('class') || '';
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
   const form = useForm<AuditFormData>({
     resolver: zodResolver(auditFormSchema),
     defaultValues: {
@@ -96,6 +81,7 @@ export default function AuditForm() {
       safetyConcern: false,
       status: 'pending',
       photos: [],
+      otherItemSpecification: '',
     },
   });
 
@@ -515,7 +501,7 @@ export default function AuditForm() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Detailed Description</FormLabel>
+                      <FormLabel>Detailed Description <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Describe the current condition, any damage, wear, or issues you've noticed..."
