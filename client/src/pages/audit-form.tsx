@@ -24,6 +24,16 @@ const auditFormSchema = insertAuditSchema.extend({
   grade: z.string().min(1, "Grade/Class is required"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
   safetyConcern: z.boolean().default(false),
+  description: z.string().min(1, "Detailed description is required"),
+  otherItemSpecification: z.string().optional(),
+}).refine(data => {
+  if (data.itemName === "Others (please specify)" && (!data.otherItemSpecification || data.otherItemSpecification.trim() === "")) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please specify the item name",
+  path: ["otherItemSpecification"]
 });
 
 type AuditFormData = z.infer<typeof auditFormSchema>;
@@ -35,7 +45,8 @@ const AUDITING_ITEMS = [
   "Lockers",
   "Student Chairs",
   "Doors",
-  "Lights"
+  "Lights",
+  "Others (please specify)"
 ];
 
 export default function AuditForm() {
@@ -163,7 +174,11 @@ export default function AuditForm() {
   };
 
   const onSubmit = (data: AuditFormData) => {
-    createAuditMutation.mutate(data);
+    const finalData = {
+      ...data,
+      itemName: data.itemName === "Others (please specify)" ? data.otherItemSpecification || data.itemName : data.itemName
+    };
+    createAuditMutation.mutate(finalData as AuditFormData);
   };
 
   const handleSafetyConcernChange = (value: string) => {
@@ -246,18 +261,35 @@ export default function AuditForm() {
                       <FormItem>
                         <FormLabel>Specific Item</FormLabel>
                         {school === 'auditing' ? (
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select item" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {AUDITING_ITEMS.map(item => (
-                                <SelectItem key={item} value={item}>{item}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="space-y-4">
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select item" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {AUDITING_ITEMS.map(item => (
+                                  <SelectItem key={item} value={item}>{item}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {field.value === "Others (please specify)" && (
+                              <FormField
+                                control={form.control}
+                                name="otherItemSpecification"
+                                render={({ field: specField }) => (
+                                  <FormItem>
+                                    <FormLabel>Please specify <span className="text-red-500">*</span></FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Enter item name" {...specField} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+                          </div>
                         ) : (
                           <FormControl>
                             <Input placeholder="e.g., Student Desk, Smart Board, Locker" {...field} />

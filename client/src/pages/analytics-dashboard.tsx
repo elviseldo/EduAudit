@@ -111,16 +111,24 @@ export default function AnalyticsDashboard() {
   }, [isAuthenticated, isLoading, user, toast]);
 
   // Fetch analytics overview data
-  const { data: analyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
+  const { data: analyticsData, isLoading: analyticsLoading, refetch: refetchOverview } = useQuery<AnalyticsData>({
     queryKey: ["/api/analytics/overview", { school }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
   // Fetch energy analytics data
-  const { data: energyAnalytics, isLoading: energyLoading } = useQuery<EnergyAnalyticsData>({
+  const { data: energyAnalytics, isLoading: energyLoading, refetch: refetchEnergy } = useQuery<EnergyAnalyticsData>({
     queryKey: ["/api/analytics/energy", { school }],
     enabled: isAuthenticated && user?.role === 'admin',
   });
+
+  // Auto-refresh when entering the page
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'admin') {
+      refetchOverview();
+      refetchEnergy();
+    }
+  }, [isAuthenticated, user, refetchOverview, refetchEnergy]);
 
   // Fetch AI insights
   const { data: aiInsights, isLoading: aiLoading } = useQuery<AIInsights>({
