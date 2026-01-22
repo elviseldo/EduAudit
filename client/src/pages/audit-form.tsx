@@ -370,7 +370,14 @@ export default function AuditForm() {
                             <SelectItem value="primary">Primary</SelectItem>
                             <SelectItem value="middle">Middle School</SelectItem>
                             <SelectItem value="high">High School</SelectItem>
-                            <SelectItem value="science">Science</SelectItem>
+                            <SelectItem value="science_lab">Science Lab</SelectItem>
+                            <SelectItem value="it_lab">IT Lab</SelectItem>
+                            <SelectItem value="language_room">Language Room</SelectItem>
+                            <SelectItem value="islamic_room">Islamic Room</SelectItem>
+                            <SelectItem value="music_room">Music Room</SelectItem>
+                            <SelectItem value="art_room">Art Room</SelectItem>
+                            <SelectItem value="dance_room">Dance Room</SelectItem>
+                            <SelectItem value="mph">MPH</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
