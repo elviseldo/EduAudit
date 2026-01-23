@@ -34,6 +34,7 @@ export default function EnergyPoll() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/energy-polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/energy-polls", { school: user?.school || localStorage.getItem("selectedSchool") }] });
       toast({
         title: "Energy Poll Submitted!",
         description: "Thank you for sharing your energy level today.",
@@ -71,6 +72,7 @@ export default function EnergyPoll() {
       physicalActivity: "none", // Default value
       comments: comments.trim() || null,
       className: className.trim(),
+      school: user?.school || localStorage.getItem("selectedSchool") || 'millennium'
     });
   };
 

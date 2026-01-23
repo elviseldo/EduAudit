@@ -420,7 +420,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pollData = {
         ...req.body,
         userId,
-        className: req.body.className || user.className || 'Unknown',
+        className: req.body.className || user?.className || 'Unknown',
+        school: req.body.school || user?.school || 'millennium', // Favor school from payload if provided
       };
       
       const validatedData = insertEnergyPollSchema.parse(pollData);
@@ -441,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      const school = req.query.school as string || 'millennium';
+      const school = (req.query.school as string) || user?.school || 'millennium';
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });

@@ -91,7 +91,7 @@ export default function AuditForm() {
       // TODO: Handle photo uploads to a file storage service
       const auditData = {
         ...data,
-        school,
+        school: user?.school || school || 'millennium',
         photos: photos.map(p => p.name), // Placeholder - in production, upload files first
       };
       await apiRequest("POST", "/api/audits", auditData);
