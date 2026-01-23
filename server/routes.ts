@@ -456,8 +456,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         polls = await storage.getEnergyPollsByUser(userId, school);
       }
       
-      console.log(`[express] GET /api/energy-polls - school: ${school}, count: ${polls.length}`);
-      res.json(polls);
+      console.log(`[express] GET /api/energy-polls - school: ${school}, userId: ${userId}, role: ${user.role}, count: ${polls?.length || 0}`);
+      res.json(polls || []);
     } catch (error) {
       console.error("Error fetching energy polls:", error);
       res.status(500).json({ message: "Failed to fetch energy polls" });

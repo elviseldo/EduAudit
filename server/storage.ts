@@ -56,9 +56,9 @@ export interface IStorage {
   
   // Energy poll operations
   createEnergyPoll(poll: InsertEnergyPoll): Promise<EnergyPoll>;
-  getEnergyPollsByUser(userId: string): Promise<EnergyPoll[]>;
+  getEnergyPollsByUser(userId: string, school?: string): Promise<EnergyPoll[]>;
   getEnergyPollsByClass(className: string): Promise<EnergyPoll[]>;
-  getAllEnergyPolls(): Promise<EnergyPoll[]>;
+  getEnergyPolls(school?: string): Promise<EnergyPoll[]>;
   getTodaysEnergyPoll(userId: string): Promise<EnergyPoll | undefined>;
 }
 
@@ -338,10 +338,14 @@ export class DatabaseStorage implements IStorage {
     return poll;
   }
 
-  async getEnergyPollsByUser(userId: string): Promise<EnergyPoll[]> {
+  async getEnergyPollsByUser(userId: string, school?: string): Promise<EnergyPoll[]> {
+    const conditions = [eq(energyPolls.userId, userId)];
+    if (school) {
+      conditions.push(eq(energyPolls.school, school));
+    }
     return await db.select()
       .from(energyPolls)
-      .where(eq(energyPolls.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(energyPolls.createdAt));
   }
 
@@ -352,7 +356,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(energyPolls.createdAt));
   }
 
-  async getAllEnergyPolls(): Promise<EnergyPoll[]> {
+  async getEnergyPolls(school?: string): Promise<EnergyPoll[]> {
+    if (school) {
+      return await db.select()
+        .from(energyPolls)
+        .where(eq(energyPolls.school, school))
+        .orderBy(desc(energyPolls.createdAt));
+    }
     return await db.select()
       .from(energyPolls)
       .orderBy(desc(energyPolls.createdAt));
@@ -712,9 +722,10 @@ export class MemStorage implements IStorage {
   }
 
   async getEnergyPollsByUser(userId: string, school?: string): Promise<EnergyPoll[]> {
-    return Array.from(this.energyPollsList.values())
-      .filter(poll => poll.userId === userId && (!school || poll.school === school))
-      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+    let polls = Array.from(this.energyPollsList.values())
+      .filter(poll => poll.userId === userId && (!school || poll.school === school));
+    
+    return polls.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
   async getEnergyPollsByClass(className: string): Promise<EnergyPoll[]> {
@@ -723,10 +734,14 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
-  async getEnergyPolls(school: string): Promise<EnergyPoll[]> {
-    return Array.from(this.energyPollsList.values())
-      .filter(poll => poll.school === school)
-      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  async getEnergyPolls(school?: string): Promise<EnergyPoll[]> {
+    let polls = Array.from(this.energyPollsList.values());
+    
+    if (school) {
+      polls = polls.filter(poll => poll.school === school);
+    }
+    
+    return polls.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
   async getAllEnergyPolls(): Promise<EnergyPoll[]> {
