@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import { saveAs } from 'file-saver';
 import { 
   ClipboardCheck, 
@@ -196,67 +196,61 @@ export default function AdminDashboard() {
     });
   };
 
-  const handleExportReports = () => {
+  const handleExportReports = async () => {
     try {
-      // Prepare data for Excel export
-      const exportData = audits.map((audit) => ({
-        'Audit ID': audit.id,
-        'Asset Type': audit.assetType,
-        'Item Name': audit.itemName,
-        'Asset ID': audit.assetId || 'N/A',
-        'Brand/Model': audit.brandModel || 'N/A',
-        'Building': audit.building,
-        'Floor': audit.floor,
-        'Grade': audit.grade,
-        'Location Notes': audit.locationNotes || 'N/A',
-        'Condition': audit.condition,
-        'Description': audit.description,
-        'Priority': audit.priority,
-        'Safety Concern': audit.safetyConcern ? 'Yes' : 'No',
-        'Status': audit.status,
-        'Review Notes': audit.reviewNotes || 'N/A',
-        'Reviewed By': audit.reviewedBy || 'N/A',
-        'Created At': new Date(audit.createdAt).toLocaleDateString(),
-        'Reviewed At': audit.reviewedAt ? new Date(audit.reviewedAt).toLocaleDateString() : 'N/A',
-      }));
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Audit Reports');
 
-      // Create workbook and worksheet
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-      // Set column widths for better formatting
-      const columnWidths = [
-        { wch: 10 }, // Audit ID
-        { wch: 15 }, // Asset Type
-        { wch: 20 }, // Item Name
-        { wch: 12 }, // Asset ID
-        { wch: 15 }, // Brand/Model
-        { wch: 12 }, // Building
-        { wch: 8 },  // Floor
-        { wch: 12 }, // Grade
-        { wch: 25 }, // Location Notes
-        { wch: 12 }, // Condition
-        { wch: 30 }, // Description
-        { wch: 10 }, // Priority
-        { wch: 12 }, // Safety Concern
-        { wch: 12 }, // Status
-        { wch: 25 }, // Review Notes
-        { wch: 15 }, // Reviewed By
-        { wch: 12 }, // Created At
-        { wch: 12 }, // Reviewed At
+      worksheet.columns = [
+        { header: 'Audit ID', key: 'auditId', width: 10 },
+        { header: 'Asset Type', key: 'assetType', width: 15 },
+        { header: 'Item Name', key: 'itemName', width: 20 },
+        { header: 'Asset ID', key: 'assetId', width: 12 },
+        { header: 'Brand/Model', key: 'brandModel', width: 15 },
+        { header: 'Building', key: 'building', width: 12 },
+        { header: 'Floor', key: 'floor', width: 8 },
+        { header: 'Grade', key: 'grade', width: 12 },
+        { header: 'Location Notes', key: 'locationNotes', width: 25 },
+        { header: 'Condition', key: 'condition', width: 12 },
+        { header: 'Description', key: 'description', width: 30 },
+        { header: 'Priority', key: 'priority', width: 10 },
+        { header: 'Safety Concern', key: 'safetyConcern', width: 12 },
+        { header: 'Status', key: 'status', width: 12 },
+        { header: 'Review Notes', key: 'reviewNotes', width: 25 },
+        { header: 'Reviewed By', key: 'reviewedBy', width: 15 },
+        { header: 'Created At', key: 'createdAt', width: 12 },
+        { header: 'Reviewed At', key: 'reviewedAt', width: 12 },
       ];
-      worksheet['!cols'] = columnWidths;
 
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Reports');
+      audits.forEach((audit) => {
+        worksheet.addRow({
+          auditId: audit.id,
+          assetType: audit.assetType,
+          itemName: audit.itemName,
+          assetId: audit.assetId || 'N/A',
+          brandModel: audit.brandModel || 'N/A',
+          building: audit.building,
+          floor: audit.floor,
+          grade: audit.grade,
+          locationNotes: audit.locationNotes || 'N/A',
+          condition: audit.condition,
+          description: audit.description,
+          priority: audit.priority,
+          safetyConcern: audit.safetyConcern ? 'Yes' : 'No',
+          status: audit.status,
+          reviewNotes: audit.reviewNotes || 'N/A',
+          reviewedBy: audit.reviewedBy || 'N/A',
+          createdAt: new Date(audit.createdAt).toLocaleDateString(),
+          reviewedAt: audit.reviewedAt ? new Date(audit.reviewedAt).toLocaleDateString() : 'N/A',
+        });
+      });
 
-      // Generate Excel file and trigger download
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
       const currentDate = new Date().toISOString().split('T')[0];
       const filename = `school-audit-reports-${currentDate}.xlsx`;
-      
+
       saveAs(blob, filename);
 
       toast({
