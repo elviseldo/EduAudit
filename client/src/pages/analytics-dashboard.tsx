@@ -97,7 +97,10 @@ export default function AnalyticsDashboard() {
 
   // Redirect to login if not authenticated or not admin
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
+    const storedRole = localStorage.getItem("userRole");
+    const isAdmin = user?.role === 'admin' || storedRole === 'admin';
+
+    if (!isLoading && (!isAuthenticated || !isAdmin)) {
       toast({
         title: "Unauthorized",
         description: "Admin access required for analytics.",
@@ -113,18 +116,19 @@ export default function AnalyticsDashboard() {
   // Fetch analytics overview data
   const { data: analyticsData, isLoading: analyticsLoading, refetch: refetchOverview } = useQuery<AnalyticsData>({
     queryKey: ["/api/analytics/overview", { school }],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user?.role === 'admin' || localStorage.getItem("userRole") === 'admin'),
   });
 
   // Fetch energy analytics data
   const { data: energyAnalytics, isLoading: energyLoading, refetch: refetchEnergy } = useQuery<EnergyAnalyticsData>({
     queryKey: ["/api/analytics/energy", { school }],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user?.role === 'admin' || localStorage.getItem("userRole") === 'admin'),
   });
 
   // Auto-refresh when entering the page
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'admin') {
+    const isAdmin = user?.role === 'admin' || localStorage.getItem("userRole") === 'admin';
+    if (isAuthenticated && isAdmin) {
       refetchOverview();
       refetchEnergy();
     }
@@ -133,7 +137,7 @@ export default function AnalyticsDashboard() {
   // Fetch AI insights
   const { data: aiInsights, isLoading: aiLoading } = useQuery<AIInsights>({
     queryKey: ["/api/analytics/ai-insights", { school }],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user?.role === 'admin' || localStorage.getItem("userRole") === 'admin'),
   });
 
   if (isLoading || analyticsLoading || energyLoading || aiLoading) {

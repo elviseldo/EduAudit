@@ -46,8 +46,14 @@ export default function SchoolSelection() {
     if (selectedSchoolId) {
       localStorage.setItem("selectedSchool", selectedSchoolId);
       if (role === 'auditing') {
+        // For auditing, we treat them as an admin to see analytics
+        localStorage.setItem("userRole", "admin");
         window.location.href = "/analytics";
+      } else if (role === 'admins') {
+        localStorage.setItem("userRole", "admin");
+        navigate("/");
       } else {
+        localStorage.setItem("userRole", "student");
         navigate("/");
       }
     }
