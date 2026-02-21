@@ -2,8 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Building2, Lock, CheckCircle } from "lucide-react";
+import { Building2, Lock, CheckCircle, ChevronDown, Users, ShieldCheck, Search } from "lucide-react";
 import { useLocation } from "wouter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SCHOOLS = [
   {
@@ -17,111 +23,158 @@ const SCHOOLS = [
 
 export default function SchoolSelection() {
   const [, navigate] = useLocation();
-  const [enteredCodes, setEnteredCodes] = useState<Record<string, string>>({});
-  const [verifiedSchools, setVerifiedSchools] = useState<Record<string, boolean>>({});
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [enteredCode, setEnteredCode] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
 
-  const handleCodeChange = (schoolId: string, value: string) => {
-    setEnteredCodes(prev => ({
-      ...prev,
-      [schoolId]: value.toUpperCase()
-    }));
-  };
+  const selectedSchool = SCHOOLS.find(s => s.id === selectedSchoolId);
 
-  const handleVerifyCode = (schoolId: string, correctCode: string) => {
-    if (enteredCodes[schoolId] === correctCode) {
-      setVerifiedSchools(prev => ({
-        ...prev,
-        [schoolId]: true
-      }));
+  const handleVerifyCode = () => {
+    if (selectedSchool && enteredCode.toUpperCase() === selectedSchool.code) {
+      setIsVerified(true);
     }
   };
 
-  const handleSelectSchool = (schoolId: string) => {
-    if (verifiedSchools[schoolId]) {
-      localStorage.setItem("selectedSchool", schoolId);
+  const handleSelectSchool = () => {
+    if (isVerified && selectedSchoolId) {
+      localStorage.setItem("selectedSchool", selectedSchoolId);
       navigate("/");
+    }
+  };
+
+  const handleRoleSelect = (role: string) => {
+    if (selectedSchoolId) {
+      localStorage.setItem("selectedSchool", selectedSchoolId);
+      if (role === 'auditing') {
+        window.location.href = "/analytics";
+      } else {
+        navigate("/");
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full">
+      <div className="max-w-md w-full">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold text-gray-900">School Audits</h1>
           </div>
-          <p className="text-lg text-gray-600">Enter your school access code to get started</p>
+          <p className="text-lg text-gray-600">Select your school and role to get started</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {SCHOOLS.map((school) => (
-            <Card 
-              key={school.id} 
-              className={`transition-all ${verifiedSchools[school.id] ? 'ring-2 ring-green-500 shadow-lg' : 'hover:shadow-lg'}`}
-            >
-              <CardHeader className={`bg-gradient-to-r ${school.color} text-white`}>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  {school.name}
-                </CardTitle>
-                <CardDescription className="text-gray-100">
-                  {school.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {verifiedSchools[school.id] ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 p-4 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-green-700 font-medium">Code verified</span>
-                    </div>
-                    <Button 
-                      className="w-full bg-green-600 hover:bg-green-700" 
-                      onClick={() => handleSelectSchool(school.id)}
-                      data-testid={`select-school-${school.id}`}
-                    >
-                      Select {school.name}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-                        <Lock className="h-4 w-4" />
-                        School Access Code
-                      </label>
-                      <Input
-                        type="password"
-                        placeholder="Enter access code"
-                        value={enteredCodes[school.id] || ''}
-                        onChange={(e) => handleCodeChange(school.id, e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleVerifyCode(school.id, school.code);
-                          }
-                        }}
-                        data-testid={`code-input-${school.id}`}
-                        className="uppercase"
-                      />
-                    </div>
-                    <Button 
-                      className="w-full"
-                      onClick={() => handleVerifyCode(school.id, school.code)}
-                      variant="outline"
-                      data-testid={`verify-code-${school.id}`}
-                    >
-                      Verify Code
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="shadow-xl border-t-4 border-primary">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-2xl">Welcome</CardTitle>
+            <CardDescription>Choose from the options below</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <div className="space-y-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between h-12 text-lg px-4 border-2">
+                    <span className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      {selectedSchoolId ? "The Millennium School" : "Select School"}
+                    </span>
+                    <ChevronDown className="h-5 w-5 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[calc(100vw-4rem)] md:w-full max-w-md">
+                  <DropdownMenuItem 
+                    className="h-12 text-lg flex items-center gap-3 cursor-pointer"
+                    onClick={() => {
+                      setSelectedSchoolId("millennium");
+                      setIsVerified(false);
+                      setEnteredCode("");
+                    }}
+                  >
+                    <Building2 className="h-5 w-5 text-blue-500" />
+                    <span>The Millennium School</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-        <p className="text-center text-sm text-gray-500 mt-8">
-          Your school selection will be saved in your browser
+              {selectedSchoolId && !isVerified && (
+                <div className="space-y-4 pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Lock className="h-4 w-4" />
+                      School Access Code
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="Enter 5-digit code"
+                      className="h-12 text-lg text-center tracking-widest uppercase border-2 focus-visible:ring-primary"
+                      value={enteredCode}
+                      onChange={(e) => setEnteredCode(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleVerifyCode()}
+                    />
+                  </div>
+                  <Button 
+                    className="w-full h-12 text-lg shadow-md"
+                    onClick={handleVerifyCode}
+                  >
+                    Verify School
+                  </Button>
+                </div>
+              )}
+
+              {isVerified && (selectedSchoolId === "millennium") && (
+                <div className="space-y-3 pt-4 border-t border-gray-100 animate-in zoom-in duration-300">
+                  <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-50 text-green-700 rounded-full text-sm font-semibold mb-4">
+                    <CheckCircle className="h-4 w-4" />
+                    Verified: The Millennium School
+                  </div>
+                  
+                  <p className="text-sm font-medium text-gray-500 mb-2">Continue as:</p>
+                  
+                  <div className="grid grid-cols-1 gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="h-14 justify-start gap-4 text-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                      onClick={() => handleRoleSelect('students')}
+                    >
+                      <Users className="h-6 w-6 text-blue-500" />
+                      <div className="text-left">
+                        <div className="font-bold">Students</div>
+                        <div className="text-xs text-gray-500 font-normal">Create and view your audits</div>
+                      </div>
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      className="h-14 justify-start gap-4 text-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all"
+                      onClick={() => handleRoleSelect('admins')}
+                    >
+                      <ShieldCheck className="h-6 w-6 text-purple-500" />
+                      <div className="text-left">
+                        <div className="font-bold">Admins</div>
+                        <div className="text-xs text-gray-500 font-normal">Manage reports and school data</div>
+                      </div>
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      className="h-14 justify-start gap-4 text-lg border-2 hover:border-green-500 hover:bg-green-50 transition-all"
+                      onClick={() => handleRoleSelect('auditing')}
+                    >
+                      <Search className="h-6 w-6 text-green-500" />
+                      <div className="text-left">
+                        <div className="font-bold">Auditing</div>
+                        <div className="text-xs text-gray-500 font-normal">View school-wide audit analytics</div>
+                      </div>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-gray-400 mt-8">
+          The Millennium School Audit Management System v1.2
         </p>
       </div>
     </div>
