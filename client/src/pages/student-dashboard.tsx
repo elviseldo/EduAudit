@@ -21,10 +21,20 @@ import {
   AlertCircle,
   Lightbulb,
   Calendar,
-  Zap
+  Zap,
+  ChevronDown,
+  Users,
+  ShieldCheck,
+  Search
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { SchoolSwitcher } from "@/pages/school-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Audit, UserAuditStats, EnergyPoll, User } from "@shared/schema";
 
 export default function StudentDashboard() {
@@ -196,6 +206,29 @@ export default function StudentDashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Millennium School</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setLocation("/")}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Students</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSwitchToAdmin()}>
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    <span>Admins</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLocation("/analytics")}>
+                    <Search className="mr-2 h-4 w-4" />
+                    <span>Auditing</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <div className="flex items-center space-x-3">
                 <span className="text-sm text-gray-700">
                   {user?.firstName} {user?.lastName}

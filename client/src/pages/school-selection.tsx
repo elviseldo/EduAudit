@@ -12,13 +12,6 @@ const SCHOOLS = [
     description: "Modern educational institution focusing on innovative learning",
     color: "from-blue-500 to-blue-600",
     code: "4ZD4D"
-  },
-  {
-    id: "auditing",
-    name: "Auditing",
-    description: "Access point for general school audit reporting and monitoring",
-    color: "from-purple-500 to-purple-600",
-    code: "1234"
   }
 ];
 
