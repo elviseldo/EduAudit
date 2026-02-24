@@ -20,8 +20,21 @@ function Router() {
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
 
   useEffect(() => {
-    const school = localStorage.getItem("selectedSchool");
-    setSelectedSchool(school);
+    const checkSchool = () => {
+      const school = localStorage.getItem("selectedSchool");
+      setSelectedSchool(school);
+    };
+
+    checkSchool();
+    // Listen for storage changes in the same window
+    window.addEventListener('storage', checkSchool);
+    // Add a small interval to check for changes if storage event doesn't fire
+    const interval = setInterval(checkSchool, 500);
+
+    return () => {
+      window.removeEventListener('storage', checkSchool);
+      clearInterval(interval);
+    };
   }, []);
 
   if (isLoading) {
