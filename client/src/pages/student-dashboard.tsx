@@ -191,6 +191,15 @@ export default function StudentDashboard() {
     );
   }
 
+  const getSchoolName = (id: string | null) => {
+    switch (id) {
+      case 'millennium': return 'The Millennium School';
+      case 'modern': return 'Gems Modern Academy';
+      case 'wellington': return 'Gems Wellington Academy';
+      default: return 'Select School';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navigation */}
@@ -209,7 +218,7 @@ export default function StudentDashboard() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Millennium School</span>
+                    <span className="text-sm font-medium">{getSchoolName(school)}</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
