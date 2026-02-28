@@ -18,6 +18,20 @@ const SCHOOLS = [
     description: "Modern educational institution focusing on innovative learning",
     color: "from-blue-500 to-blue-600",
     code: "4ZD4D"
+  },
+  {
+    id: "modern",
+    name: "Gems Modern Academy",
+    description: "Excellence in education and holistic development",
+    color: "from-red-500 to-red-600",
+    code: "GEMS1"
+  },
+  {
+    id: "wellington",
+    name: "Gems Wellington Academy",
+    description: "Inspirational learning environment for global citizens",
+    color: "from-green-500 to-green-600",
+    code: "GEMS2"
   }
 ];
 
@@ -81,23 +95,29 @@ export default function SchoolSelection() {
                   <Button variant="outline" className="w-full justify-between h-12 text-lg px-4 border-2">
                     <span className="flex items-center gap-2">
                       <Building2 className="h-5 w-5 text-primary" />
-                      {selectedSchoolId ? "The Millennium School" : "Select School"}
+                      {selectedSchool ? selectedSchool.name : "Select School"}
                     </span>
                     <ChevronDown className="h-5 w-5 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-[calc(100vw-4rem)] md:w-full max-w-md">
-                  <DropdownMenuItem 
-                    className="h-12 text-lg flex items-center gap-3 cursor-pointer"
-                    onClick={() => {
-                      setSelectedSchoolId("millennium");
-                      setIsVerified(false);
-                      setEnteredCode("");
-                    }}
-                  >
-                    <Building2 className="h-5 w-5 text-blue-500" />
-                    <span>The Millennium School</span>
-                  </DropdownMenuItem>
+                  {SCHOOLS.map((school) => (
+                    <DropdownMenuItem 
+                      key={school.id}
+                      className="h-12 text-lg flex items-center gap-3 cursor-pointer"
+                      onClick={() => {
+                        setSelectedSchoolId(school.id);
+                        setIsVerified(false);
+                        setEnteredCode("");
+                      }}
+                    >
+                      <Building2 className={`h-5 w-5 ${
+                        school.id === 'millennium' ? 'text-blue-500' : 
+                        school.id === 'modern' ? 'text-red-500' : 'text-green-500'
+                      }`} />
+                      <span>{school.name}</span>
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -126,11 +146,11 @@ export default function SchoolSelection() {
                 </div>
               )}
 
-              {isVerified && (selectedSchoolId === "millennium") && (
+              {isVerified && selectedSchoolId && (
                 <div className="space-y-3 pt-4 border-t border-gray-100 animate-in zoom-in duration-300">
                   <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-50 text-green-700 rounded-full text-sm font-semibold mb-4">
                     <CheckCircle className="h-4 w-4" />
-                    Verified: The Millennium School
+                    Verified: {selectedSchool?.name}
                   </div>
                   
                   <p className="text-sm font-medium text-gray-500 mb-2">Continue as:</p>
