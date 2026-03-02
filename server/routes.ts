@@ -78,7 +78,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const school = req.body.school || 'millennium';
+      const school = req.body.school;
+      
+      if (!school) {
+        return res.status(400).json({ message: "School identifier is required" });
+      }
+
       const auditData = {
         ...req.body,
         userId,

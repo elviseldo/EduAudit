@@ -72,7 +72,7 @@ export default function EnergyPoll() {
       physicalActivity: "none", // Default value
       comments: comments.trim() || null,
       className: className.trim(),
-      school: user?.school || localStorage.getItem("selectedSchool") || 'millennium'
+      school: localStorage.getItem("selectedSchool") || 'millennium'
     });
   };
 
