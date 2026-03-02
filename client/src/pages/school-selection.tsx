@@ -32,13 +32,6 @@ const SCHOOLS = [
     description: "Inspirational learning environment for global citizens",
     color: "from-green-500 to-green-600",
     code: "GEMS2"
-  },
-  {
-    id: "auditing",
-    name: "Auditing",
-    description: "Access point for general school audit reporting and monitoring",
-    color: "from-purple-500 to-purple-600",
-    code: "1234"
   }
 ];
 
@@ -65,22 +58,16 @@ export default function SchoolSelection() {
 
   const handleRoleSelect = (role: string) => {
     if (selectedSchoolId) {
-      localStorage.setItem("selectedSchool", selectedSchoolId);
-      
-      // Special handling for the standalone 'auditing' school
-      if (selectedSchoolId === 'auditing') {
-        localStorage.setItem("userRole", "student"); // Default role for audit submission
-        window.location.href = "/";
-        return;
-      }
-
       if (role === 'auditing') {
-        localStorage.setItem("userRole", "admin");
-        window.location.href = "/analytics";
+        localStorage.setItem("selectedSchool", "auditing");
+        localStorage.setItem("userRole", "student");
+        window.location.href = "/";
       } else if (role === 'admins') {
+        localStorage.setItem("selectedSchool", selectedSchoolId);
         localStorage.setItem("userRole", "admin");
         window.location.href = "/";
       } else {
+        localStorage.setItem("selectedSchool", selectedSchoolId);
         localStorage.setItem("userRole", "student");
         window.location.href = "/";
       }
@@ -128,8 +115,7 @@ export default function SchoolSelection() {
                     >
                       <Building2 className={`h-5 w-5 ${
                         school.id === 'millennium' ? 'text-blue-500' : 
-                        school.id === 'modern' ? 'text-red-500' : 
-                        school.id === 'auditing' ? 'text-purple-500' : 'text-green-500'
+                        school.id === 'modern' ? 'text-red-500' : 'text-green-500'
                       }`} />
                       <span>{school.name}</span>
                     </DropdownMenuItem>
@@ -172,57 +158,41 @@ export default function SchoolSelection() {
                   <p className="text-sm font-medium text-gray-500 mb-2">Continue as:</p>
                   
                   <div className="grid grid-cols-1 gap-3">
-                    {selectedSchoolId === 'auditing' ? (
-                      <Button 
-                        variant="outline" 
-                        className="h-14 justify-start gap-4 text-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all"
-                        onClick={() => handleRoleSelect('student')}
-                      >
-                        <Search className="h-6 w-6 text-purple-500" />
-                        <div className="text-left">
-                          <div className="font-bold">Access Auditing Portal</div>
-                          <div className="text-xs text-gray-500 font-normal">Start school-wide audit reporting</div>
-                        </div>
-                      </Button>
-                    ) : (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          className="h-14 justify-start gap-4 text-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all"
-                          onClick={() => handleRoleSelect('students')}
-                        >
-                          <Users className="h-6 w-6 text-blue-500" />
-                          <div className="text-left">
-                            <div className="font-bold">Students</div>
-                            <div className="text-xs text-gray-500 font-normal">Create and view your audits</div>
-                          </div>
-                        </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-14 justify-start gap-4 text-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                      onClick={() => handleRoleSelect('students')}
+                    >
+                      <Users className="h-6 w-6 text-blue-500" />
+                      <div className="text-left">
+                        <div className="font-bold">Students</div>
+                        <div className="text-xs text-gray-500 font-normal">Create and view your audits</div>
+                      </div>
+                    </Button>
 
-                        <Button 
-                          variant="outline" 
-                          className="h-14 justify-start gap-4 text-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all"
-                          onClick={() => handleRoleSelect('admins')}
-                        >
-                          <ShieldCheck className="h-6 w-6 text-purple-500" />
-                          <div className="text-left">
-                            <div className="font-bold">Admins</div>
-                            <div className="text-xs text-gray-500 font-normal">Manage reports and school data</div>
-                          </div>
-                        </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-14 justify-start gap-4 text-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all"
+                      onClick={() => handleRoleSelect('admins')}
+                    >
+                      <ShieldCheck className="h-6 w-6 text-purple-500" />
+                      <div className="text-left">
+                        <div className="font-bold">Admins</div>
+                        <div className="text-xs text-gray-500 font-normal">Manage reports and school data</div>
+                      </div>
+                    </Button>
 
-                        <Button 
-                          variant="outline" 
-                          className="h-14 justify-start gap-4 text-lg border-2 hover:border-green-500 hover:bg-green-50 transition-all"
-                          onClick={() => handleRoleSelect('auditing')}
-                        >
-                          <Search className="h-6 w-6 text-green-500" />
-                          <div className="text-left">
-                            <div className="font-bold">Auditing</div>
-                            <div className="text-xs text-gray-500 font-normal">View school-wide audit analytics</div>
-                          </div>
-                        </Button>
-                      </>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      className="h-14 justify-start gap-4 text-lg border-2 hover:border-green-500 hover:bg-green-50 transition-all"
+                      onClick={() => handleRoleSelect('auditing')}
+                    >
+                      <Search className="h-6 w-6 text-green-500" />
+                      <div className="text-left">
+                        <div className="font-bold">Auditing</div>
+                        <div className="text-xs text-gray-500 font-normal">Start school-wide audit reporting</div>
+                      </div>
+                    </Button>
                   </div>
                 </div>
               )}

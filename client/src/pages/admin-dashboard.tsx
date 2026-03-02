@@ -343,7 +343,10 @@ export default function AdminDashboard() {
                     <ShieldCheck className="mr-2 h-4 w-4" />
                     <span>Admins</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLocation("/analytics")}>
+                  <DropdownMenuItem onClick={() => {
+                    localStorage.setItem("selectedSchool", "auditing");
+                    window.location.href = "/";
+                  }}>
                     <Search className="mr-2 h-4 w-4" />
                     <span>Auditing</span>
                   </DropdownMenuItem>
