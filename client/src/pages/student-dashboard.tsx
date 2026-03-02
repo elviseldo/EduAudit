@@ -196,6 +196,7 @@ export default function StudentDashboard() {
       case 'millennium': return 'The Millennium School';
       case 'modern': return 'Gems Modern Academy';
       case 'wellington': return 'Gems Wellington Academy';
+      case 'auditing': return 'Auditing Portal';
       default: return 'Select School';
     }
   };
