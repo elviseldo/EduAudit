@@ -86,6 +86,7 @@ export function AuditTable({ audits, isLoading, onApprove, onFlag, isUpdating }:
           <TableRow>
             <TableHead>Asset</TableHead>
             <TableHead>Location</TableHead>
+            <TableHead>Reports</TableHead>
             <TableHead>Condition</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>Status</TableHead>
@@ -108,12 +109,12 @@ export function AuditTable({ audits, isLoading, onApprove, onFlag, isUpdating }:
                 </div>
               </TableCell>
               <TableCell>
-                <div className="text-sm text-gray-900">{audit.room}</div>
+                <div className="text-sm text-gray-900">{audit.grade}</div>
                 <div className="text-sm text-gray-500 capitalize">{audit.building}</div>
               </TableCell>
               <TableCell>
-                <Badge className={getConditionColor(audit.condition)}>
-                  {audit.condition}
+                <Badge variant="outline" className="font-bold">
+                  {audit.reportCount || 1}
                 </Badge>
               </TableCell>
               <TableCell>

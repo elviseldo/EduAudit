@@ -113,6 +113,38 @@ export class DatabaseStorage implements IStorage {
 
   // Audit operations
   async createAudit(auditData: InsertAudit): Promise<Audit> {
+    // Check for duplicate pending audits to group them
+    const existingAudits = await db.select()
+      .from(audits)
+      .where(and(
+        eq(audits.school, auditData.school),
+        eq(audits.building, auditData.building),
+        eq(audits.floor, auditData.floor),
+        eq(audits.grade, auditData.grade),
+        eq(audits.assetType, auditData.assetType),
+        eq(audits.itemName, auditData.itemName),
+        eq(audits.status, "pending")
+      ));
+
+    if (existingAudits.length > 0) {
+      const existing = existingAudits[0];
+      const newReportCount = (existing.reportCount || 1) + 1;
+      
+      // Auto-flag as urgent if reported by 5 or more students
+      const newPriority = newReportCount >= 5 ? "urgent" : existing.priority;
+
+      const [updated] = await db
+        .update(audits)
+        .set({
+          reportCount: newReportCount,
+          priority: newPriority,
+          updatedAt: new Date(),
+        })
+        .where(eq(audits.id, existing.id))
+        .returning();
+      return updated;
+    }
+
     const [audit] = await db
       .insert(audits)
       .values(auditData)
@@ -177,12 +209,12 @@ export class DatabaseStorage implements IStorage {
       return await db.select()
         .from(audits)
         .where(and(...conditions))
-        .orderBy(desc(audits.createdAt));
+        .orderBy(desc(audits.reportCount), desc(audits.priority), desc(audits.createdAt));
     }
     
     return await db.select()
       .from(audits)
-      .orderBy(desc(audits.createdAt));
+      .orderBy(desc(audits.reportCount), desc(audits.priority), desc(audits.createdAt));
   }
 
   async updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit> {

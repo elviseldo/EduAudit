@@ -59,6 +59,7 @@ export const audits = pgTable("audits", {
   priority: varchar("priority").notNull(), // low, medium, high, urgent
   safetyConcern: boolean("safety_concern").default(false),
   status: varchar("status").notNull().default("pending"), // pending, reviewed, in_progress, resolved
+  reportCount: integer("report_count").default(1),
   reviewNotes: text("review_notes"),
   reviewedBy: varchar("reviewed_by"),
   reviewedAt: timestamp("reviewed_at"),
