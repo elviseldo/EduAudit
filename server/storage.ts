@@ -511,6 +511,10 @@ export class MemStorage implements IStorage {
   async getAllAudits(filters?: AuditFilters): Promise<Audit[]> {
     let audits = Array.from(this.audits.values());
     
+    if (filters?.school) {
+      audits = audits.filter(a => a.school === filters.school);
+    }
+    
     if (filters?.status && filters.status !== "all") {
       audits = audits.filter(a => a.status === filters.status);
     }
