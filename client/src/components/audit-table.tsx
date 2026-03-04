@@ -1,7 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Check, Flag, Armchair, Monitor, Archive, DoorOpen } from "lucide-react";
+import { Eye, Check, Flag, Armchair, Monitor, Archive, DoorOpen, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { Audit } from "@shared/schema";
 
 interface AuditTableProps {
@@ -132,17 +139,94 @@ export function AuditTable({ audits, isLoading, onApprove, onFlag, isUpdating }:
               </TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-primary hover:text-blue-600"
-                    onClick={() => {
-                      // TODO: Implement view audit details
-                      console.log('View audit', audit.id);
-                    }}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-primary hover:text-blue-600"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                          {getAssetIcon(audit.assetType)}
+                          {audit.itemName}
+                        </DialogTitle>
+                      </DialogHeader>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Report Details</h4>
+                            <div className="mt-2 space-y-2">
+                              <p><span className="font-medium">Status:</span> <Badge className={getStatusColor(audit.status)}>{formatStatus(audit.status)}</Badge></p>
+                              <p><span className="font-medium">Priority:</span> <Badge className={getPriorityColor(audit.priority)}>{audit.priority}</Badge></p>
+                              <p><span className="font-medium">Reports:</span> <span className="font-bold">{audit.reportCount || 1} students flagged this</span></p>
+                              <p><span className="font-medium">Condition:</span> <Badge className={getConditionColor(audit.condition)}>{audit.condition}</Badge></p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Location</h4>
+                            <div className="mt-2 space-y-1">
+                              <p><span className="font-medium">School:</span> {audit.school.charAt(0).toUpperCase() + audit.school.slice(1)}</p>
+                              <p><span className="font-medium">Building:</span> {audit.building}</p>
+                              <p><span className="font-medium">Floor:</span> {audit.floor}</p>
+                              <p><span className="font-medium">Grade/Class:</span> {audit.grade}</p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Issue Description</h4>
+                            <p className="mt-2 p-3 bg-gray-50 rounded-md text-gray-700 italic border-l-4 border-primary">
+                              "{audit.description}"
+                            </p>
+                          </div>
+
+                          {audit.reviewNotes && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Maintenance Notes</h4>
+                              <p className="mt-2 p-3 bg-green-50 text-green-800 rounded-md">
+                                {audit.reviewNotes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-4">
+                          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Attached Evidence</h4>
+                          {audit.photos && audit.photos.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-4">
+                              {audit.photos.map((photo, idx) => (
+                                <div key={idx} className="relative group">
+                                  <img 
+                                    src={photo} 
+                                    alt={`Audit evidence ${idx + 1}`}
+                                    className="rounded-lg object-cover w-full h-64 shadow-md border border-gray-200"
+                                  />
+                                  <a 
+                                    href={photo} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="absolute bottom-2 right-2 p-2 bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <ExternalLink className="h-4 w-4 text-primary" />
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                              <p className="text-gray-500 italic">No images attached to this report</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   {audit.status === 'pending' && (
                     <>
                       <Button
