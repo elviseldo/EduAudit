@@ -162,6 +162,7 @@ export function AuditTable({ audits, isLoading, onApprove, onFlag, isUpdating }:
                           <div>
                             <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Report Details</h4>
                             <div className="mt-2 space-y-2">
+                              <p><span className="font-medium">Submitted By:</span> <span className="text-primary font-semibold">{audit.reviewedBy || 'Student'}</span></p>
                               <p><span className="font-medium">Status:</span> <Badge className={getStatusColor(audit.status)}>{formatStatus(audit.status)}</Badge></p>
                               <p><span className="font-medium">Priority:</span> <Badge className={getPriorityColor(audit.priority)}>{audit.priority}</Badge></p>
                               <p><span className="font-medium">Reports:</span> <span className="font-bold">{audit.reportCount || 1} students flagged this</span></p>

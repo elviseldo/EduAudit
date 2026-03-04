@@ -45,6 +45,20 @@ export default function StudentDashboard() {
   const [, setLocation] = useLocation();
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
 
+  useEffect(() => {
+    const savedName = localStorage.getItem("userName");
+    if (isAuthenticated && user && savedName && (!user.firstName || user.firstName === "Test")) {
+      // Update user profile with the name entered during school selection
+      const [first, ...rest] = savedName.split(" ");
+      apiRequest("PATCH", "/api/user/profile", {
+        firstName: first,
+        lastName: rest.join(" ") || "",
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      });
+    }
+  }, [isAuthenticated, user, queryClient]);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

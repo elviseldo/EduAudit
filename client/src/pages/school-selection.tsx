@@ -39,6 +39,7 @@ export default function SchoolSelection() {
   const [, navigate] = useLocation();
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [enteredCode, setEnteredCode] = useState("");
+  const [userName, setUserName] = useState("");
   const [isVerified, setIsVerified] = useState(false);
 
   const selectedSchool = SCHOOLS.find(s => s.id === selectedSchoolId);
@@ -49,15 +50,13 @@ export default function SchoolSelection() {
     }
   };
 
-  const handleSelectSchool = () => {
-    if (isVerified && selectedSchoolId) {
-      localStorage.setItem("selectedSchool", selectedSchoolId);
-      navigate("/");
-    }
-  };
-
   const handleRoleSelect = (role: string) => {
     if (selectedSchoolId) {
+      if (!userName.trim()) {
+        alert("Please enter your name first");
+        return;
+      }
+      localStorage.setItem("userName", userName.trim());
       if (role === 'auditing') {
         localStorage.setItem("selectedSchool", "auditing");
         localStorage.setItem("userRole", "student");
@@ -153,6 +152,16 @@ export default function SchoolSelection() {
                   <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-50 text-green-700 rounded-full text-sm font-semibold mb-4">
                     <CheckCircle className="h-4 w-4" />
                     Verified: {selectedSchool?.name}
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <label className="text-sm font-medium text-gray-700">Enter Your Full Name</label>
+                    <Input
+                      placeholder="e.g. John Doe"
+                      className="h-12 border-2"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                    />
                   </div>
                   
                   <p className="text-sm font-medium text-gray-500 mb-2">Continue as:</p>

@@ -88,11 +88,22 @@ export default function AuditForm() {
   // Create audit mutation
   const createAuditMutation = useMutation({
     mutationFn: async (data: AuditFormData) => {
-      // TODO: Handle photo uploads to a file storage service
+      // Create a copy of the data to avoid modifying the original
       const auditData = {
         ...data,
         school: localStorage.getItem('selectedSchool') || school || 'millennium',
-        photos: photos.map(p => p.name), // Placeholder - in production, upload files first
+        // In a real app, we would upload files to a service like S3 or Cloudinary
+        // and store the returned URLs. For this demo, we'll use base64 strings
+        // or temporary object URLs if we had a preview system.
+        // Let's convert our file objects to base64 for the mock storage
+        photos: await Promise.all(photos.map(file => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+        })),
+        reviewedBy: localStorage.getItem("userName") || user?.firstName || 'Student',
       };
       await apiRequest("POST", "/api/audits", auditData);
     },
