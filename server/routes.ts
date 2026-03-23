@@ -280,7 +280,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/user/profile', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { role, studentId, className } = req.body;
+      const { role, studentId, className, firstName, lastName } = req.body;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // If only name fields are being updated (no role change), allow it directly
+      if (!role && (firstName !== undefined || lastName !== undefined)) {
+        const updatedUser = await storage.upsertUser({
+          ...user,
+          firstName: firstName ?? user.firstName,
+          lastName: lastName ?? user.lastName,
+        });
+        return res.json(updatedUser);
+      }
       
       if (!role || !['student', 'admin'].includes(role)) {
         return res.status(400).json({ message: "Valid role is required" });
@@ -288,11 +303,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (role === 'student' && (!studentId || !className)) {
         return res.status(400).json({ message: "Student ID and class name are required for student role" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
       }
 
       const updatedUser = await storage.upsertUser({
