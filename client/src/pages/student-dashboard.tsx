@@ -138,8 +138,16 @@ export default function StudentDashboard() {
   };
 
   const handleSwitchToAdmin = () => {
+    const name = prompt("Enter your full name:");
+    if (!name || !name.trim()) {
+      if (name !== null) {
+        toast({ title: "Name Required", description: "Please enter your name.", variant: "destructive" });
+      }
+      return;
+    }
     const adminCode = prompt("Enter Admin Access Code:");
     if (adminCode === "1818") {
+      localStorage.setItem("userName", name.trim());
       switchRoleMutation.mutate({
         role: "admin",
       });

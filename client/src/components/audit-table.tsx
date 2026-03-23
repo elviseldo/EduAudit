@@ -118,6 +118,13 @@ export function AuditTable({ audits, isLoading, onApprove, onFlag, isUpdating }:
               <TableCell>
                 <div className="text-sm text-gray-900">{audit.grade}</div>
                 <div className="text-sm text-gray-500 capitalize">{audit.building}</div>
+                <div className="text-xs text-blue-600 font-medium mt-0.5">
+                  {(() => {
+                    const name = audit.reviewedBy;
+                    if (!name || /^[a-z]+-[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return '';
+                    return name;
+                  })()}
+                </div>
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className="font-bold">
@@ -162,7 +169,15 @@ export function AuditTable({ audits, isLoading, onApprove, onFlag, isUpdating }:
                           <div>
                             <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Report Details</h4>
                             <div className="mt-2 space-y-2">
-                              <p><span className="font-medium">Submitted By:</span> <span className="text-primary font-semibold">{audit.reviewedBy || 'Student'}</span></p>
+                              <p><span className="font-medium">Submitted By:</span> <span className="text-primary font-semibold">{
+                                (() => {
+                                  const name = audit.reviewedBy;
+                                  if (!name) return 'Student';
+                                  // Hide raw Replit user IDs
+                                  if (/^[a-z]+-[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return 'Student';
+                                  return name;
+                                })()
+                              }</span></p>
                               <p><span className="font-medium">Status:</span> <Badge className={getStatusColor(audit.status)}>{formatStatus(audit.status)}</Badge></p>
                               <p><span className="font-medium">Priority:</span> <Badge className={getPriorityColor(audit.priority)}>{audit.priority}</Badge></p>
                               <p><span className="font-medium">Reports:</span> <span className="font-bold">{audit.reportCount || 1} students flagged this</span></p>
