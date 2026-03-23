@@ -159,6 +159,14 @@ export default function AdminDashboard() {
   };
 
   const handleSwitchToStudent = () => {
+    const name = prompt("Enter your full name:");
+    if (!name || !name.trim()) {
+      if (name !== null) {
+        toast({ title: "Name Required", description: "Please enter your name.", variant: "destructive" });
+      }
+      return;
+    }
+
     const studentId = prompt("Enter your Student ID:");
     if (!studentId || !studentId.trim()) {
       if (studentId !== null) {
@@ -183,6 +191,7 @@ export default function AdminDashboard() {
       return;
     }
 
+    localStorage.setItem("userName", name.trim());
     switchRoleMutation.mutate({
       role: "student",
       studentId: studentId.trim(),

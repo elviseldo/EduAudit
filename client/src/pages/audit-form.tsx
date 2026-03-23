@@ -103,7 +103,14 @@ export default function AuditForm() {
             reader.readAsDataURL(file);
           });
         })),
-        reviewedBy: localStorage.getItem("userName") || user?.firstName || 'Student',
+        reviewedBy: (() => {
+          const saved = localStorage.getItem("userName");
+          if (saved && saved.trim()) return saved.trim();
+          const name = user?.firstName;
+          // Avoid showing raw Replit user IDs (they contain hyphens and numbers)
+          if (name && !/^[a-z]+-[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return name;
+          return 'Student';
+        })(),
       };
       await apiRequest("POST", "/api/audits", auditData);
     },
