@@ -47,17 +47,21 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const savedName = localStorage.getItem("userName");
-    if (isAuthenticated && user && savedName && (!user.firstName || user.firstName === "Test")) {
-      // Update user profile with the name entered during school selection
+    if (isAuthenticated && user && savedName) {
       const [first, ...rest] = savedName.split(" ");
-      apiRequest("PATCH", "/api/user/profile", {
-        firstName: first,
-        lastName: rest.join(" ") || "",
-      }).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      });
+      // Only update if the name differs from what's stored
+      if (user.firstName !== first || user.lastName !== (rest.join(" ") || null)) {
+        apiRequest("PATCH", "/api/user/profile", {
+          firstName: first,
+          lastName: rest.join(" ") || "",
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        }).catch(() => {
+          // silently ignore name sync errors
+        });
+      }
     }
-  }, [isAuthenticated, user, queryClient]);
+  }, [isAuthenticated, user?.id]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
