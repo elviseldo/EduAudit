@@ -1,16 +1,12 @@
 import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupMicrosoftAuth, isMicrosoftAuthenticated } from "./microsoftAuth";
 import { insertAuditSchema, insertEnergyPollSchema } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
-import { batchProcess } from "./replit_integrations/batch";
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
   setupMicrosoftAuth(app);
 
   // Test authentication middleware - automatically logs in as admin
