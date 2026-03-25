@@ -1,14 +1,14 @@
+
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
+// Hardcoded connection for your private local EduAudit project
+const supabaseUrl = "postgresql://postgres:85aWG6RQU9NeYVfk@db.ssgjbqmqknqbryrcvlft.supabase.co:5432/postgres";
 
 export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: supabaseUrl,
   },
 });
