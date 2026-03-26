@@ -56,14 +56,25 @@ export default function SchoolSelection() {
         alert("Please enter your name first");
         return;
       }
+
+      if (role === 'admins') {
+        const adminCode = prompt("Enter Admin Access Code:");
+        if (adminCode === null) return;
+        if (adminCode !== "1818") {
+          alert("Invalid admin access code. Access denied.");
+          return;
+        }
+        localStorage.setItem("userName", userName.trim());
+        localStorage.setItem("selectedSchool", selectedSchoolId);
+        localStorage.setItem("userRole", "admin");
+        window.location.href = "/";
+        return;
+      }
+
       localStorage.setItem("userName", userName.trim());
       if (role === 'auditing') {
         localStorage.setItem("selectedSchool", "auditing");
         localStorage.setItem("userRole", "student");
-        window.location.href = "/";
-      } else if (role === 'admins') {
-        localStorage.setItem("selectedSchool", selectedSchoolId);
-        localStorage.setItem("userRole", "admin");
         window.location.href = "/";
       } else {
         localStorage.setItem("selectedSchool", selectedSchoolId);
