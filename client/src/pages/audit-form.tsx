@@ -115,8 +115,8 @@ export default function AuditForm() {
       await apiRequest("POST", "/api/audits", auditData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/audits", school] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats", school] });
+      queryClient.invalidateQueries({ predicate: (q) => (q.queryKey[0] as string)?.startsWith("/api/audits") });
+      queryClient.invalidateQueries({ predicate: (q) => (q.queryKey[0] as string)?.startsWith("/api/stats") });
       toast({
         title: "Success",
         description: "Audit report submitted successfully",

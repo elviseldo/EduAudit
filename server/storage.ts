@@ -33,8 +33,8 @@ export interface IStorage {
   getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]>;
   getAllAudits(filters?: AuditFilters): Promise<Audit[]>;
   updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit>;
-  getAuditStats(): Promise<AuditStats>;
-  getUserAuditStats(userId: string): Promise<UserAuditStats>;
+  getAuditStats(school: string): Promise<AuditStats>;
+  getUserAuditStats(userId: string, school: string, submittedBy?: string): Promise<UserAuditStats>;
   
   // Asset catalog operations
   createAssetCatalogItem(item: InsertAssetCatalog): Promise<AssetCatalog>;
@@ -256,8 +256,8 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string, school: string): Promise<UserAuditStats> {
-    const userAudits = await this.getAuditsByUser(userId, school);
+  async getUserAuditStats(userId: string, school: string, submittedBy?: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId, school, submittedBy);
     
     return {
       totalAudits: userAudits.length,
@@ -593,8 +593,8 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string, school: string): Promise<UserAuditStats> {
-    const userAudits = await this.getAuditsByUser(userId, school);
+  async getUserAuditStats(userId: string, school: string, submittedBy?: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId, school, submittedBy);
     
     return {
       totalAudits: userAudits.length,

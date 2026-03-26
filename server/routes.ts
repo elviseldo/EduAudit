@@ -248,7 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user.role === 'admin') {
           stats = await storage.getAuditStats(school);
         } else {
-          stats = await storage.getUserAuditStats(userId);
+          const submittedBy = req.query.submittedBy as string | undefined;
+          stats = await storage.getUserAuditStats(userId, school, submittedBy);
         }
       } catch (dbError) {
         console.error("Database error fetching stats:", dbError);
@@ -716,12 +717,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      const school = req.query.school as string || 'millennium';
       
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      const audits = await storage.getAllAudits();
+      const audits = await storage.getAllAudits({ school });
       
       if (audits.length === 0) {
         return res.json({

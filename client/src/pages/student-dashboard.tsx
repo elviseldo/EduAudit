@@ -105,9 +105,16 @@ export default function StudentDashboard() {
     enabled: isAuthenticated,
   });
 
-  // Fetch user stats
+  // Fetch user stats — scoped to this student's name and school
+  const statsUrl = (() => {
+    const p = new URLSearchParams();
+    if (school) p.set("school", school);
+    if (submittedByName) p.set("submittedBy", submittedByName);
+    return `/api/stats?${p.toString()}`;
+  })();
+
   const { data: stats } = useQuery<UserAuditStats>({
-    queryKey: ["/api/stats", { school }],
+    queryKey: [statsUrl],
     enabled: isAuthenticated,
   });
 
