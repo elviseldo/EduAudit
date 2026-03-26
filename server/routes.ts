@@ -74,11 +74,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const school = req.body.school;
+      const user = await storage.getUser(userId);
 
-      if (!school) {
-        return res.status(400).json({ message: "School identifier is required" });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
+
+      const school = user.school;
 
       const auditData = {
         ...req.body,
@@ -103,7 +105,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/audits', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const school = req.query.school as string || 'millennium';
       let user;
 
       try {
@@ -116,8 +117,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user) {
         // Mock admin user for testing
-        user = { role: 'admin' };
+        user = { role: 'admin', school: 'millennium' };
       }
+
+      const school = user.school;
 
       let audits;
       try {
@@ -179,6 +182,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      if (audit.school !== user.school) {
+        return res.status(403).json({ message: "Access denied to other school's data" });
+      }
+
       res.json(audit);
     } catch (error) {
       console.error("Error fetching audit:", error);
@@ -194,6 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const existingAudit = await storage.getAuditById(auditId);
+      if (!existingAudit) {
+        return res.status(404).json({ message: "Audit not found" });
+      }
+      if (existingAudit.school !== user.school) {
+        return res.status(403).json({ message: "Access denied to other school's data" });
       }
 
       const { status, reviewNotes } = req.body;
@@ -214,7 +229,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/stats', authenticateUser, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const school = req.query.school as string || 'millennium';
       let user;
 
       try {
@@ -235,8 +249,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user) {
         // Mock admin user for testing
-        user = { role: 'admin' };
+        user = { role: 'admin', school: 'millennium' };
       }
+      
+      const school = user.school;
 
       let stats;
       try {
@@ -379,7 +395,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const logs = await storage.getAllMaintenanceLogs();
-      res.json(logs);
+      const audits = await storage.getAllAudits({ school: user.school });
+      const validAuditIds = new Set(audits.map(a => a.id));
+      const filteredLogs = logs.filter(log => validAuditIds.has(log.auditId));
+      
+      res.json(filteredLogs);
     } catch (error) {
       console.error("Error fetching maintenance logs:", error);
       res.status(500).json({ message: "Failed to fetch maintenance logs" });
@@ -389,6 +409,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/audits/:id/maintenance-logs", authenticateUser, async (req: any, res) => {
     try {
       const auditId = parseInt(req.params.id);
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const audit = await storage.getAuditById(auditId);
+      if (!audit || audit.school !== user.school) {
+         return res.status(403).json({ message: "Access denied to other school's data" });
+      }
+
       const logs = await storage.getMaintenanceLogsByAudit(auditId);
       res.json(logs);
     } catch (error) {
@@ -403,6 +432,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const audit = await storage.getAuditById(req.body.auditId);
+      if (!audit || audit.school !== user.school) {
+         return res.status(403).json({ message: "Access denied to other school's data" });
       }
 
       const log = await storage.createMaintenanceLog({
@@ -432,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId,
         className: req.body.className || user?.className || 'Unknown',
-        school: req.body.school || user?.school || 'millennium', // Favor school from payload if provided
+        school: user.school, // Strictly enforce school isolation
       };
 
       const validatedData = insertEnergyPollSchema.parse(pollData);
@@ -453,11 +487,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      const school = (req.query.school as string) || user?.school || 'millennium';
-
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      const school = user.school;
 
       let polls;
       if (user.role === 'admin') {
@@ -497,7 +531,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const className = req.params.className;
-      const polls = await storage.getEnergyPollsByClass(className);
+      const allPolls = await storage.getEnergyPollsByClass(className);
+      const polls = allPolls.filter(p => p.school === user.school);
       res.json(polls);
     } catch (error) {
       console.error("Error fetching energy polls by class:", error);
@@ -510,11 +545,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      const school = req.query.school as string || 'millennium';
 
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
+
+      const school = user.school;
 
       const [audits, energyPolls] = await Promise.all([
         storage.getAllAudits({ school }),
@@ -716,7 +752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      const audits = await storage.getAllAudits();
+      const audits = await storage.getAllAudits({ school: user.school });
 
       if (audits.length === 0) {
         return res.json({
