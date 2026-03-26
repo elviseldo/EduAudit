@@ -32,7 +32,9 @@ import {
   ChevronDown,
   Users,
   ShieldCheck,
-  Search
+  Search,
+  GraduationCap,
+  ClipboardList,
 } from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { AuditTable } from "@/components/audit-table";
@@ -54,6 +56,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [auditTab, setAuditTab] = useState<"students" | "auditors">("students");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -70,9 +73,24 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Fetch all audits with filters
+  // Build URL with query params
+  const buildAuditsUrl = (schoolId: string) => {
+    const params = new URLSearchParams({ school: schoolId });
+    if (statusFilter && statusFilter !== "all") params.set("status", statusFilter);
+    if (priorityFilter && priorityFilter !== "all") params.set("priority", priorityFilter);
+    if (searchTerm) params.set("search", searchTerm);
+    return `/api/audits?${params.toString()}`;
+  };
+
+  // Fetch student audits (from the selected school)
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
-    queryKey: ["/api/audits", school, { status: statusFilter, priority: priorityFilter, search: searchTerm }],
+    queryKey: [buildAuditsUrl(school || "millennium"), "student-tab"],
+    enabled: isAuthenticated && user?.role === 'admin',
+  });
+
+  // Fetch auditor audits (from the auditing portal, school = 'auditing')
+  const { data: auditorAudits = [], isLoading: auditorAuditsLoading } = useQuery<Audit[]>({
+    queryKey: [buildAuditsUrl("auditing"), "auditor-tab"],
     enabled: isAuthenticated && user?.role === 'admin',
   });
 
@@ -97,7 +115,8 @@ export default function AdminDashboard() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/audits", school] });
+      queryClient.invalidateQueries({ queryKey: [buildAuditsUrl(school || "millennium"), "student-tab"] });
+      queryClient.invalidateQueries({ queryKey: [buildAuditsUrl("auditing"), "auditor-tab"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats", school] });
       toast({
         title: "Success",
@@ -551,14 +570,13 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Audits Management */}
+        {/* Recent Audits Management - Tabbed */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Audit Submissions</CardTitle>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm text-gray-600">Filter:</label>
+          <CardHeader className="pb-0">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <CardTitle>Audit Submissions</CardTitle>
+                <div className="flex items-center space-x-3">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-32">
                       <SelectValue placeholder="All Status" />
@@ -571,9 +589,6 @@ export default function AdminDashboard() {
                       <SelectItem value="resolved">Resolved</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm text-gray-600">Priority:</label>
                   <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                     <SelectTrigger className="w-32">
                       <SelectValue placeholder="All Priorities" />
@@ -586,24 +601,70 @@ export default function AdminDashboard() {
                       <SelectItem value="low">Low</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Input
+                    placeholder="Search audits..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-44"
+                  />
                 </div>
-                <Input
-                  placeholder="Search audits..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-48"
-                />
+              </div>
+
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setAuditTab("students")}
+                  className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                    auditTab === "students"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <GraduationCap className="h-4 w-4" />
+                  Students
+                  <span className={`ml-1 text-xs rounded-full px-2 py-0.5 font-bold ${
+                    auditTab === "students" ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {audits.length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setAuditTab("auditors")}
+                  className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                    auditTab === "auditors"
+                      ? "border-teal-600 text-teal-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Auditors
+                  <span className={`ml-1 text-xs rounded-full px-2 py-0.5 font-bold ${
+                    auditTab === "auditors" ? "bg-teal-50 text-teal-700" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {auditorAudits.length}
+                  </span>
+                </button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <AuditTable
-              audits={audits}
-              isLoading={auditsLoading}
-              onApprove={handleApproveAudit}
-              onFlag={handleFlagAudit}
-              isUpdating={updateStatusMutation.isPending}
-            />
+          <CardContent className="pt-4">
+            {auditTab === "students" ? (
+              <AuditTable
+                audits={audits}
+                isLoading={auditsLoading}
+                onApprove={handleApproveAudit}
+                onFlag={handleFlagAudit}
+                isUpdating={updateStatusMutation.isPending}
+              />
+            ) : (
+              <AuditTable
+                audits={auditorAudits}
+                isLoading={auditorAuditsLoading}
+                onApprove={handleApproveAudit}
+                onFlag={handleFlagAudit}
+                isUpdating={updateStatusMutation.isPending}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
