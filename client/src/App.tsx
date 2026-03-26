@@ -14,6 +14,7 @@ import AuditForm from "@/pages/audit-form";
 import EnergyPoll from "@/pages/energy-poll";
 import AnalyticsDashboard from "@/pages/analytics-dashboard";
 import SchoolSelection from "@/pages/school-selection";
+import AuditingPortal from "@/pages/auditing-portal";
 
 function Router() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -56,13 +57,21 @@ function Router() {
     );
   }
 
+  // Auditing portal is a special school that gets its own dedicated page
+  const isAuditingPortal = selectedSchool === 'auditing';
+
   return (
     <Switch>
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
-          {user?.role === 'admin' ? (
+          {isAuditingPortal ? (
+            <>
+              <Route path="/" component={AuditingPortal} />
+              <Route path="/audit/new" component={AuditForm} />
+            </>
+          ) : user?.role === 'admin' ? (
             <>
               <Route path="/" component={AdminDashboard} />
               <Route path="/analytics" component={AnalyticsDashboard} />
