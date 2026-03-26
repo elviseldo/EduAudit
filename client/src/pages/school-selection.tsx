@@ -98,7 +98,7 @@ export default function SchoolSelection() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold text-gray-900">School Audits</h1>
+            <h1 className="text-4xl font-bold text-gray-900">EduAudit</h1>
           </div>
           <p className="text-lg text-gray-600">Select your school and role to get started</p>
         </div>
