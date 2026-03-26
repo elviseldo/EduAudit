@@ -229,7 +229,7 @@ export default function SchoolSelection() {
         </Card>
 
         <p className="text-center text-xs text-gray-400 mt-8">
-          The Millennium School Audit Management System v1.2
+          EduAudit Management System 2.1.12
         </p>
       </div>
     </div>
