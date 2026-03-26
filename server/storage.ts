@@ -30,11 +30,11 @@ export interface IStorage {
   // Audit operations
   createAudit(audit: InsertAudit): Promise<Audit>;
   getAuditById(id: number): Promise<Audit | undefined>;
-  getAuditsByUser(userId: string): Promise<Audit[]>;
+  getAuditsByUser(userId: string, school?: string): Promise<Audit[]>;
   getAllAudits(filters?: AuditFilters): Promise<Audit[]>;
   updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit>;
-  getAuditStats(): Promise<AuditStats>;
-  getUserAuditStats(userId: string): Promise<UserAuditStats>;
+  getAuditStats(school?: string): Promise<AuditStats>;
+  getUserAuditStats(userId: string, school?: string): Promise<UserAuditStats>;
   
   // Asset catalog operations
   createAssetCatalogItem(item: InsertAssetCatalog): Promise<AssetCatalog>;
@@ -69,6 +69,7 @@ export interface AuditFilters {
   assetType?: string;
   building?: string;
   search?: string;
+  school?: string;
 }
 
 export interface AuditStats {
@@ -117,7 +118,7 @@ export class DatabaseStorage implements IStorage {
     const existingAudits = await db.select()
       .from(audits)
       .where(and(
-        eq(audits.school, auditData.school),
+        eq(audits.school, auditData.school || "millennium"),
         eq(audits.building, auditData.building),
         eq(audits.floor, auditData.floor),
         eq(audits.grade, auditData.grade),
@@ -250,7 +251,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string, school: string): Promise<UserAuditStats> {
+  async getUserAuditStats(userId: string, school?: string): Promise<UserAuditStats> {
     const userAudits = await this.getAuditsByUser(userId, school);
     
     return {
@@ -452,6 +453,7 @@ export class MemStorage implements IStorage {
       role: userData.role || "student",
       studentId: userData.studentId || null,
       className: userData.className || null,
+      school: userData.school || "millennium",
       createdAt: existingUser?.createdAt || now,
       updatedAt: now,
     };
@@ -482,9 +484,14 @@ export class MemStorage implements IStorage {
     const audit: Audit = {
       ...auditData,
       id: this.auditIdCounter++,
+      school: auditData.school || "millennium",
+      status: auditData.status || "pending",
+      reportCount: auditData.reportCount || 1,
+      safetyConcern: auditData.safetyConcern || false,
       assetId: auditData.assetId || null,
       brandModel: auditData.brandModel || null,
       locationNotes: auditData.locationNotes || null,
+      otherItemSpecification: auditData.otherItemSpecification || null,
       quantity: auditData.quantity || 1,
       reviewNotes: auditData.reviewNotes || null,
       reviewedBy: auditData.reviewedBy || null,
@@ -502,9 +509,9 @@ export class MemStorage implements IStorage {
     return this.audits.get(id);
   }
 
-  async getAuditsByUser(userId: string): Promise<Audit[]> {
+  async getAuditsByUser(userId: string, school?: string): Promise<Audit[]> {
     return Array.from(this.audits.values())
-      .filter(audit => audit.userId === userId)
+      .filter(audit => audit.userId === userId && (!school || audit.school === school))
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
@@ -580,7 +587,7 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string, school: string): Promise<UserAuditStats> {
+  async getUserAuditStats(userId: string, school?: string): Promise<UserAuditStats> {
     const userAudits = await this.getAuditsByUser(userId, school);
     
     return {
@@ -744,6 +751,7 @@ export class MemStorage implements IStorage {
     const poll: EnergyPoll = {
       ...pollData,
       id: this.energyPollIdCounter++,
+      school: pollData.school || "millennium",
       lightsOff: pollData.lightsOff || false,
       smartBoardOff: pollData.smartBoardOff || false,
       sleepHours: pollData.sleepHours || null,

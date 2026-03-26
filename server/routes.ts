@@ -13,7 +13,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const authenticateUser: RequestHandler = async (req, res, next) => {
     // Create test user for development
     const testUserId = "test-user-123";
-    
+
     try {
       // Ensure test user exists in database
       let testUser = await storage.getUser(testUserId);
@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const school = req.body.school;
-      
+
       if (!school) {
         return res.status(400).json({ message: "School identifier is required" });
       }
@@ -85,10 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         school
       };
-      
+
       const validatedData = insertAuditSchema.parse(auditData);
       const audit = await storage.createAudit(validatedData);
-      
+
       res.status(201).json(audit);
     } catch (error) {
       console.error("Error creating audit:", error);
@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const school = req.query.school as string || 'millennium';
       let user;
-      
+
       try {
         user = await storage.getUser(userId);
       } catch (dbError) {
@@ -113,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Return empty audits array if database is not accessible
         return res.json([]);
       }
-      
+
       if (!user) {
         // Mock admin user for testing
         user = { role: 'admin' };
@@ -132,14 +132,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             building: req.query.building as string,
             search: req.query.search as string,
           };
-          
+
           // Remove undefined values
           Object.keys(filters).forEach(key => {
             if (!filters[key as keyof typeof filters]) {
               delete filters[key as keyof typeof filters];
             }
           });
-          
+
           audits = await storage.getAllAudits(filters);
         } else {
           // Students can only see their own audits from their school
@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Return empty audits array if database is not accessible
         return res.json([]);
       }
-      
+
       res.json(audits);
     } catch (error) {
       console.error("Error fetching audits:", error);
@@ -163,13 +163,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const auditId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       const audit = await storage.getAuditById(auditId);
-      
+
       if (!audit) {
         return res.status(404).json({ message: "Audit not found" });
       }
@@ -191,13 +191,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const auditId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const { status, reviewNotes } = req.body;
-      
+
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
       }
@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const school = req.query.school as string || 'millennium';
       let user;
-      
+
       try {
         user = await storage.getUser(userId);
       } catch (dbError) {
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           urgentAudits: 0
         });
       }
-      
+
       if (!user) {
         // Mock admin user for testing
         user = { role: 'admin' };
@@ -243,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user.role === 'admin') {
           stats = await storage.getAuditStats(school);
         } else {
-          stats = await storage.getUserAuditStats(userId);
+          stats = await storage.getUserAuditStats(userId, school);
         }
       } catch (dbError) {
         console.error("Database error fetching stats:", dbError);
@@ -257,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...(user.role === 'admin' ? { highPriorityAudits: 0, urgentAudits: 0 } : {})
         });
       }
-      
+
       res.json(stats);
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         return res.json(updatedUser);
       }
-      
+
       if (!role || !['student', 'admin'].includes(role)) {
         return res.status(400).json({ message: "Valid role is required" });
       }
@@ -421,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'student') {
         return res.status(403).json({ message: "Student access required" });
       }
@@ -434,10 +434,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         className: req.body.className || user?.className || 'Unknown',
         school: req.body.school || user?.school || 'millennium', // Favor school from payload if provided
       };
-      
+
       const validatedData = insertEnergyPollSchema.parse(pollData);
       const poll = await storage.createEnergyPoll(validatedData);
-      
+
       res.status(201).json(poll);
     } catch (error) {
       console.error("Error creating energy poll:", error);
@@ -454,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       const school = (req.query.school as string) || user?.school || 'millennium';
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -467,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Students can only see their own polls from their school
         polls = await storage.getEnergyPollsByUser(userId, school);
       }
-      
+
       console.log(`[express] GET /api/energy-polls - school: ${school}, userId: ${userId}, role: ${user.role}, count: ${polls?.length || 0}`);
       res.json(polls || []);
     } catch (error) {
@@ -491,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -511,7 +511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       const school = req.query.school as string || 'millennium';
-      
+
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
@@ -524,14 +524,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Audit trends over time (last 30 days)
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
+
       const auditTrends = Array.from({ length: 30 }, (_, i) => {
         const date = new Date(thirtyDaysAgo.getTime() + i * 24 * 60 * 60 * 1000);
         const dateStr = date.toISOString().split('T')[0];
-        const dayAudits = audits.filter(audit => 
+        const dayAudits = audits.filter(audit =>
           audit.createdAt && new Date(audit.createdAt).toISOString().split('T')[0] === dateStr
         );
-        
+
         return {
           date: dateStr,
           count: dayAudits.length,
@@ -568,12 +568,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const energyTrends = Array.from({ length: 30 }, (_, i) => {
         const date = new Date(thirtyDaysAgo.getTime() + i * 24 * 60 * 60 * 1000);
         const dateStr = date.toISOString().split('T')[0];
-        const dayPolls = energyPolls.filter(poll => 
+        const dayPolls = energyPolls.filter(poll =>
           poll.createdAt && new Date(poll.createdAt).toISOString().split('T')[0] === dateStr
         );
-        
-        const avgEnergyLevel = dayPolls.length > 0 
-          ? dayPolls.reduce((sum, poll) => sum + poll.energyLevel, 0) / dayPolls.length 
+
+        const avgEnergyLevel = dayPolls.length > 0
+          ? dayPolls.reduce((sum, poll) => sum + poll.energyLevel, 0) / dayPolls.length
           : 0;
 
         return {
@@ -585,12 +585,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Response time analytics (time from creation to resolution)
       const resolvedAudits = audits.filter(a => a.status === 'resolved' && a.reviewedAt);
-      const avgResponseTime = resolvedAudits.length > 0 
+      const avgResponseTime = resolvedAudits.length > 0
         ? resolvedAudits.reduce((sum, audit) => {
-            const created = new Date(audit.createdAt!).getTime();
-            const resolved = new Date(audit.reviewedAt!).getTime();
-            return sum + (resolved - created);
-          }, 0) / resolvedAudits.length / (1000 * 60 * 60 * 24) // Convert to days
+          const created = new Date(audit.createdAt!).getTime();
+          const resolved = new Date(audit.reviewedAt!).getTime();
+          return sum + (resolved - created);
+        }, 0) / resolvedAudits.length / (1000 * 60 * 60 * 24) // Convert to days
         : 0;
 
       res.json({
@@ -619,7 +619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       const school = req.query.school as string || 'millennium';
-      
+
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
@@ -633,7 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const HOURS_ON_IF_LEFT = 12; // Estimated hours left on if not turned off
 
       const energyPollsFiltered = energyPolls;
-      
+
       const classStats = energyPollsFiltered.reduce((acc: any, poll) => {
         if (!acc[poll.className]) {
           acc[poll.className] = {
@@ -657,7 +657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const totalLightsOff = energyPollsFiltered.filter(p => p.lightsOff).length;
       const totalLightsOn = energyPollsFiltered.filter(p => !p.lightsOff).length;
-      
+
       // Cost calculation: (lights * watts * hours / 1000) * cost_per_kwh
       const kWhPerClassPerEvent = (LIGHTS_PER_CLASS * WATTS_PER_LIGHT * HOURS_ON_IF_LEFT) / 1000;
       const estimatedCostSaved = totalLightsOff * kWhPerClassPerEvent * COST_PER_KWH;
@@ -692,8 +692,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activityStats,
         summary: {
           totalResponses: energyPollsFiltered.length,
-          averageEnergyLevel: energyPollsFiltered.length > 0 
-            ? energyPollsFiltered.reduce((sum, poll) => sum + poll.energyLevel, 0) / energyPollsFiltered.length 
+          averageEnergyLevel: energyPollsFiltered.length > 0
+            ? energyPollsFiltered.reduce((sum, poll) => sum + poll.energyLevel, 0) / energyPollsFiltered.length
             : 0,
           uniqueClasses: Object.keys(classStats).length,
           estimatedCostSaved: Math.round(estimatedCostSaved * 100) / 100,
@@ -711,13 +711,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
       const audits = await storage.getAllAudits();
-      
+
       if (audits.length === 0) {
         return res.json({
           summary: "No audit data available yet. Create some audits to get AI-powered insights.",
