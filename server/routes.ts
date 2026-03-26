@@ -146,8 +146,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           audits = await storage.getAllAudits(filters);
         } else {
-          // Students can only see their own audits from their school
-          audits = await storage.getAuditsByUser(userId, school);
+          // Students only see audits they submitted — filtered by their entered name
+          const submittedBy = req.query.submittedBy as string | undefined;
+          audits = await storage.getAuditsByUser(userId, school, submittedBy);
         }
       } catch (dbError) {
         console.error("Database error fetching audits:", dbError);

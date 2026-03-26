@@ -30,7 +30,7 @@ export interface IStorage {
   // Audit operations
   createAudit(audit: InsertAudit): Promise<Audit>;
   getAuditById(id: number): Promise<Audit | undefined>;
-  getAuditsByUser(userId: string): Promise<Audit[]>;
+  getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]>;
   getAllAudits(filters?: AuditFilters): Promise<Audit[]>;
   updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit>;
   getAuditStats(): Promise<AuditStats>;
@@ -157,10 +157,16 @@ export class DatabaseStorage implements IStorage {
     return audit;
   }
 
-  async getAuditsByUser(userId: string, school?: string): Promise<Audit[]> {
-    const conditions = [eq(audits.userId, userId)];
+  async getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]> {
+    const conditions = [];
     if (school) {
       conditions.push(eq(audits.school, school));
+    }
+    if (submittedBy) {
+      // Filter by the name the student entered (stored in reviewedBy)
+      conditions.push(eq(audits.reviewedBy, submittedBy));
+    } else {
+      conditions.push(eq(audits.userId, userId));
     }
     return await db.select()
       .from(audits)
@@ -502,9 +508,16 @@ export class MemStorage implements IStorage {
     return this.audits.get(id);
   }
 
-  async getAuditsByUser(userId: string): Promise<Audit[]> {
+  async getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]> {
     return Array.from(this.audits.values())
-      .filter(audit => audit.userId === userId)
+      .filter(audit => {
+        if (school && audit.school !== school) return false;
+        // If a name was provided, filter by the stored reviewer name (submitter)
+        if (submittedBy) {
+          return audit.reviewedBy?.toLowerCase() === submittedBy.toLowerCase();
+        }
+        return audit.userId === userId;
+      })
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 

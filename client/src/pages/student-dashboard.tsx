@@ -91,9 +91,17 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch user's audits
+  // Fetch user's audits — filter by name so each student only sees their own
+  const submittedByName = localStorage.getItem("userName") || "";
+  const auditsUrl = (() => {
+    const p = new URLSearchParams();
+    if (school) p.set("school", school);
+    if (submittedByName) p.set("submittedBy", submittedByName);
+    return `/api/audits?${p.toString()}`;
+  })();
+
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
-    queryKey: ["/api/audits", { school }],
+    queryKey: [auditsUrl],
     enabled: isAuthenticated,
   });
 
