@@ -10,7 +10,7 @@ export default function Landing() {
           <div className="mx-auto h-16 w-16 bg-primary rounded-full flex items-center justify-center mb-4">
             <ClipboardCheck className="text-white text-2xl" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">School Audits</h2>
+          <h2 className="text-3xl font-bold text-gray-900">EduAudit</h2>
           <p className="mt-2 text-sm text-gray-600">
             Asset Management & Reporting System
           </p>
@@ -21,7 +21,7 @@ export default function Landing() {
             <div className="text-center space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Welcome to School Audits
+                  Welcome to EduAudit
                 </h3>
                 <p className="text-sm text-gray-600">
                   Sign in to access the school asset management system. Report and track the condition of furniture, equipment, and facilities.

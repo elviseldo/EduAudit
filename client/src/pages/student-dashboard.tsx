@@ -91,15 +91,30 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch user's audits
+  // Fetch user's audits — filter by name so each student only sees their own
+  const submittedByName = localStorage.getItem("userName") || "";
+  const auditsUrl = (() => {
+    const p = new URLSearchParams();
+    if (school) p.set("school", school);
+    if (submittedByName) p.set("submittedBy", submittedByName);
+    return `/api/audits?${p.toString()}`;
+  })();
+
   const { data: audits = [], isLoading: auditsLoading } = useQuery<Audit[]>({
-    queryKey: ["/api/audits", { school }],
+    queryKey: [auditsUrl],
     enabled: isAuthenticated,
   });
 
-  // Fetch user stats
+  // Fetch user stats — scoped to this student's name and school
+  const statsUrl = (() => {
+    const p = new URLSearchParams();
+    if (school) p.set("school", school);
+    if (submittedByName) p.set("submittedBy", submittedByName);
+    return `/api/stats?${p.toString()}`;
+  })();
+
   const { data: stats } = useQuery<UserAuditStats>({
-    queryKey: ["/api/stats", { school }],
+    queryKey: [statsUrl],
     enabled: isAuthenticated,
   });
 
@@ -238,7 +253,7 @@ export default function StudentDashboard() {
                 <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
                   <ClipboardCheck className="text-white text-sm" />
                 </div>
-                <span className="ml-3 text-xl font-semibold text-gray-900">School Audits</span>
+                <span className="ml-3 text-xl font-semibold text-gray-900">EduAudit</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">

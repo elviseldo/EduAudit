@@ -30,11 +30,11 @@ export interface IStorage {
   // Audit operations
   createAudit(audit: InsertAudit): Promise<Audit>;
   getAuditById(id: number): Promise<Audit | undefined>;
-  getAuditsByUser(userId: string, school?: string): Promise<Audit[]>;
+  getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]>;
   getAllAudits(filters?: AuditFilters): Promise<Audit[]>;
   updateAuditStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Audit>;
   getAuditStats(school?: string): Promise<AuditStats>;
-  getUserAuditStats(userId: string, school?: string): Promise<UserAuditStats>;
+  getUserAuditStats(userId: string, school?: string, submittedBy?: string): Promise<UserAuditStats>;
   
   // Asset catalog operations
   createAssetCatalogItem(item: InsertAssetCatalog): Promise<AssetCatalog>;
@@ -158,10 +158,16 @@ export class DatabaseStorage implements IStorage {
     return audit;
   }
 
-  async getAuditsByUser(userId: string, school?: string): Promise<Audit[]> {
-    const conditions = [eq(audits.userId, userId)];
+  async getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]> {
+    const conditions = [];
     if (school) {
       conditions.push(eq(audits.school, school));
+    }
+    if (submittedBy) {
+      // Filter by the name the student entered (stored in reviewedBy)
+      conditions.push(eq(audits.reviewedBy, submittedBy));
+    } else {
+      conditions.push(eq(audits.userId, userId));
     }
     return await db.select()
       .from(audits)
@@ -251,8 +257,8 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string, school?: string): Promise<UserAuditStats> {
-    const userAudits = await this.getAuditsByUser(userId, school);
+  async getUserAuditStats(userId: string, school?: string, submittedBy?: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId, school, submittedBy);
     
     return {
       totalAudits: userAudits.length,
@@ -509,9 +515,16 @@ export class MemStorage implements IStorage {
     return this.audits.get(id);
   }
 
-  async getAuditsByUser(userId: string, school?: string): Promise<Audit[]> {
+  async getAuditsByUser(userId: string, school?: string, submittedBy?: string): Promise<Audit[]> {
     return Array.from(this.audits.values())
-      .filter(audit => audit.userId === userId && (!school || audit.school === school))
+      .filter(audit => {
+        if (school && audit.school !== school) return false;
+        // If a name was provided, filter by the stored reviewer name (submitter)
+        if (submittedBy) {
+          return audit.reviewedBy?.toLowerCase() === submittedBy.toLowerCase();
+        }
+        return audit.userId === userId;
+      })
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
@@ -587,8 +600,8 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getUserAuditStats(userId: string, school?: string): Promise<UserAuditStats> {
-    const userAudits = await this.getAuditsByUser(userId, school);
+  async getUserAuditStats(userId: string, school?: string, submittedBy?: string): Promise<UserAuditStats> {
+    const userAudits = await this.getAuditsByUser(userId, school, submittedBy);
     
     return {
       totalAudits: userAudits.length,

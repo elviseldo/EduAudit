@@ -145,8 +145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           audits = await storage.getAllAudits(filters);
         } else {
-          // Students can only see their own audits from their school
-          audits = await storage.getAuditsByUser(userId, school);
+          // Students only see audits they submitted — filtered by their entered name
+          const submittedBy = req.query.submittedBy as string | undefined;
+          audits = await storage.getAuditsByUser(userId, school, submittedBy);
         }
       } catch (dbError) {
         console.error("Database error fetching audits:", dbError);
@@ -259,7 +260,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user.role === 'admin') {
           stats = await storage.getAuditStats(school);
         } else {
-          stats = await storage.getUserAuditStats(userId, school);
+          const submittedBy = req.query.submittedBy as string | undefined;
+          stats = await storage.getUserAuditStats(userId, school, submittedBy);
         }
       } catch (dbError) {
         console.error("Database error fetching stats:", dbError);
@@ -747,13 +749,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-
+      const school = req.query.school as string || 'millennium';
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      const audits = await storage.getAllAudits({ school: user.school });
-
+      const audits = await storage.getAllAudits({ school });
       if (audits.length === 0) {
         return res.json({
           summary: "No audit data available yet. Create some audits to get AI-powered insights.",

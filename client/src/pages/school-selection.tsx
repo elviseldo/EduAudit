@@ -56,20 +56,39 @@ export default function SchoolSelection() {
         alert("Please enter your name first");
         return;
       }
-      localStorage.setItem("userName", userName.trim());
-      if (role === 'auditing') {
-        localStorage.setItem("selectedSchool", "auditing");
-        localStorage.setItem("userRole", "student");
-        window.location.href = "/";
-      } else if (role === 'admins') {
+
+      if (role === 'admins') {
+        const adminCode = prompt("Enter Admin Access Code:");
+        if (adminCode === null) return;
+        if (adminCode !== "1818") {
+          alert("Invalid admin access code. Access denied.");
+          return;
+        }
+        localStorage.setItem("userName", userName.trim());
         localStorage.setItem("selectedSchool", selectedSchoolId);
         localStorage.setItem("userRole", "admin");
         window.location.href = "/";
-      } else {
-        localStorage.setItem("selectedSchool", selectedSchoolId);
+        return;
+      }
+
+      if (role === 'auditing') {
+        const auditingCode = prompt("Enter Auditing Access Code:");
+        if (auditingCode === null) return;
+        if (auditingCode !== "1827") {
+          alert("Invalid auditing access code. Access denied.");
+          return;
+        }
+        localStorage.setItem("userName", userName.trim());
+        localStorage.setItem("selectedSchool", "auditing");
         localStorage.setItem("userRole", "student");
         window.location.href = "/";
+        return;
       }
+
+      localStorage.setItem("userName", userName.trim());
+      localStorage.setItem("selectedSchool", selectedSchoolId);
+      localStorage.setItem("userRole", "student");
+      window.location.href = "/";
     }
   };
 
@@ -79,7 +98,7 @@ export default function SchoolSelection() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold text-gray-900">School Audits</h1>
+            <h1 className="text-4xl font-bold text-gray-900">EduAudit</h1>
           </div>
           <p className="text-lg text-gray-600">Select your school and role to get started</p>
         </div>
@@ -210,7 +229,7 @@ export default function SchoolSelection() {
         </Card>
 
         <p className="text-center text-xs text-gray-400 mt-8">
-          The Millennium School Audit Management System v1.2
+          EduAudit Management System 2.1.12
         </p>
       </div>
     </div>
